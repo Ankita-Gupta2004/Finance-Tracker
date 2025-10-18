@@ -11,28 +11,58 @@ import {
 import { motion } from "framer-motion";
 import Footer from "../Footer";
 import Navbar from "../Navbar";
+import CryptoJS from "crypto-js"; // NEW
+import { useAuth } from "../../context/AuthContext";
+
 
 export default function AssetsCard() {
   const [assets, setAssets] = useState([
-    { id: crypto.randomUUID(), name: "", type: "Cash", value: "", note: "" },
-  ]);
+  { id: crypto.randomUUID(), name: "", type: "Cash", value: "", note: "" },
+]);
+const { user, loading } = useAuth();
+
+if (loading) return <p>Loading...</p>; // show spinner while Firebase checks user
+if (!user) return <p>Please log in to view your assets.</p>; // show if not logged in
+
+  
+
+
+const SECRET_KEY = "my_assets_secret_key_123"; // NEW: encryption key
+
+const storageKey = `assetsData_${user?.uid}`; // NEW: per-user storage key
+
+
 
   // Load from localStorage
-  useEffect(() => {
-    const savedData = localStorage.getItem("assetsData");
-    if (savedData) setAssets(JSON.parse(savedData));
-  }, []);
-
-  const addAsset = () => {
+useEffect(() => {
+  if (!user) return;
+  const encrypted = localStorage.getItem(storageKey);
+  if (encrypted) {
+    try {
+      const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      const parsed = JSON.parse(decrypted);
+      setAssets(parsed);
+    } catch (err) {
+      console.error("Decryption failed:", err);
+      setAssets([
+        { id: crypto.randomUUID(), name: "", type: "Cash", value: "", note: "" },
+      ]);
+    }
+  }
+}, [user]);
+const addAsset = () => {
     setAssets((prev) => [
       ...prev,
       { id: crypto.randomUUID(), name: "", type: "Cash", value: "", note: "" },
     ]);
   };
 
-  const removeAsset = (id) => {
-    setAssets((prev) => prev.filter((a) => a.id !== id));
-  };
+const removeAsset = (id) => {
+  setAssets((prev) => prev.filter((a) => a.id !== id));
+};
+
+
 
   const handleAssetChange = (id, field, value) => {
     setAssets((prev) =>
@@ -40,10 +70,22 @@ export default function AssetsCard() {
     );
   };
 
-  const handleSave = () => {
-    localStorage.setItem("assetsData", JSON.stringify(assets));
+ const saveAssets = (data) => { // NEW helper
+  if (!user) return;
+  try {
+    const encrypted = CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
+    localStorage.setItem(storageKey, encrypted);
     alert("Assets saved locally!");
-  };
+  } catch (err) {
+    console.error("Encryption failed:", err);
+    alert("Failed to save assets.");
+  }
+};
+
+const handleSave = () => {
+  saveAssets(assets); // NEW
+};
+
   const totalAssetsValue = assets.reduce(
     (sum, asset) => sum + Number(asset.value || 0),
     0

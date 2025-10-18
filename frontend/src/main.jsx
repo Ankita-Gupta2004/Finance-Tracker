@@ -20,68 +20,73 @@ import Dashboard from "./componenets/Dashboard/Dashboard.jsx";
 // Routes
 import PrivateRoute from "./routes/PrivateRoute.jsx";
 
+import { AuthProvider } from "./context/AuthContext";
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<App />} />
-        <Route path="/createaccount" element={<CreateAccount />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/fdcalculator" element={<FDCalculator />} />
-        <Route path="/rdcalculator" element={<RDCalculator />} />
-        <Route path="/sipcalculator" element={<SIPCalculator />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<App />} />
+          <Route path="/createaccount" element={<CreateAccount />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/fdcalculator" element={<FDCalculator />} />
+          <Route path="/rdcalculator" element={<RDCalculator />} />
+          <Route path="/sipcalculator" element={<SIPCalculator />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/expenseform"
-          element={
-            <PrivateRoute>
-              <ExpensesPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/goalspage"
-          element={
-            <PrivateRoute>
-              <GoalsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/assetscard"
-          element={
-            <PrivateRoute>
-              <AssetsCard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/report"
-          element={
-            <PrivateRoute>
-              <Report />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/investmentssection"
-          element={
-            <PrivateRoute>
-              <InvestmentsSection />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/expenseform"
+            element={
+              <PrivateRoute>
+                <ExpensesPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/goalspage"
+            element={
+              <PrivateRoute>
+                <GoalsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/assetscard"
+            element={
+              <PrivateRoute>
+                <AssetsCard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/report"
+            element={
+              <PrivateRoute>
+                <Report />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/investmentssection"
+            element={
+              <PrivateRoute>
+                <InvestmentsSection />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   </StrictMode>
 );
+

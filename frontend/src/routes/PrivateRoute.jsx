@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../Firebase";
+import { auth } from "../firebase";
 
 const financeTips = [
   "Track your expenses daily to save more effectively.",

@@ -10,7 +10,7 @@ import {
   BarChart2,
   Calculator,
 } from "lucide-react";
-import { auth } from "../Firebase";
+import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
@@ -57,114 +57,112 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-black/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16 justify-between">
-  {/* Logo - Left */}
-  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-    FinTrack
-  </div>
+          {/* Logo - Left */}
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            FinTrack
+          </div>
 
-  {/* Nav Items - Center */}
-  <div className="hidden md:flex items-center space-x-6 justify-center flex-1">
-    {navLinks.map((link) => (
-      <a
-        key={link.name}
-        href={link.href}
-        className="text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-      >
-        {link.name}
-      </a>
-    ))}
-
-    {/* Calculators Dropdown */}
-    <div className="relative">
-      <button
-        onClick={() => setCalcOpen(!calcOpen)}
-        className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-      >
-        <span>Calculators</span>
-        <ChevronDown size={16} />
-      </button>
-
-      <AnimatePresence>
-        {calcOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute mt-2 w-40 rounded-lg shadow-lg bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700"
-          >
-            <div className="py-2">
-              {calculatorLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                >
-                  {link.name}
-                </a>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  </div>
-
-  {/* Right Section: Account + ThemeToggle */}
-  <div className="hidden md:flex items-center space-x-4">
-    {/* Account Button */}
-    <div className="relative">
-      <button
-        onClick={() => setAccountOpen(!accountOpen)}
-        className="flex items-center px-4 py-2 rounded-lg border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-      >
-        <User className="w-5 h-5 mr-1" />
-        <span>Account</span>
-      </button>
-
-      <AnimatePresence>
-        {accountOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute right-0 mt-2 w-40 rounded-lg shadow-lg bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 flex flex-col"
-          >
-            {!user ? (
-              <>
-                <a
-                  href="/login"
-                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                >
-                  Login
-                </a>
-                <a
-                  href="/createaccount"
-                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                >
-                  Create Account
-                </a>
-              </>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-600 transition-colors"
+          {/* Nav Items - Center */}
+          <div className="hidden md:flex items-center space-x-6 justify-center flex-1">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                className="text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               >
-                Logout
+                {link.name}
+              </a>
+            ))}
+
+            {/* Calculators Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setCalcOpen(!calcOpen)}
+                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              >
+                <span>Calculators</span>
+                <ChevronDown size={16} />
               </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
 
-    <ThemeToggle />
-  </div>
-</div>
+              <AnimatePresence>
+                {calcOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute mt-2 w-40 rounded-lg shadow-lg bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="py-2">
+                      {calculatorLinks.map((link) => (
+                        <a
+                          key={link.name}
+                          href={link.href}
+                          className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        >
+                          {link.name}
+                        </a>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
 
+          {/* Right Section: Account + ThemeToggle */}
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Account Button */}
+            <div className="relative">
+              <button
+                onClick={() => setAccountOpen(!accountOpen)}
+                className="flex items-center px-4 py-2 rounded-lg border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+              >
+                <User className="w-5 h-5 mr-1" />
+                <span>Account</span>
+              </button>
+
+              <AnimatePresence>
+                {accountOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-2 w-40 rounded-lg shadow-lg bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 flex flex-col"
+                  >
+                    {!user ? (
+                      <>
+                        <a
+                          href="/login"
+                          className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        >
+                          Login
+                        </a>
+                        <a
+                          href="/createaccount"
+                          className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        >
+                          Create Account
+                        </a>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-600 transition-colors"
+                      >
+                        Logout
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <ThemeToggle />
+          </div>
+        </div>
       </div>
-
       {/* Mobile Menu & Bottom Animation Bar */}
-{/* Mobile Menu - Creative Icon Bar */}
+      {/* Mobile Menu - Creative Icon Bar */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -253,7 +251,6 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <motion.div className="absolute bottom-0 left-0 w-full h-px overflow-hidden">
         <motion.div
           className="h-px bg-emerald-500/30 rounded-full"
@@ -269,6 +266,7 @@ export default function Navbar() {
             ease: "easeInOut",
           }}
         />
-      </motion.div>    </nav>
+      </motion.div>{" "}
+    </nav>
   );
 }

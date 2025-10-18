@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Navbar from "../componenets/Navbar";
 import Footer from "../componenets/Footer";
-import { auth } from "../Firebase";
+import { auth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 

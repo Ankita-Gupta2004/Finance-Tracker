@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, Trash2, ClipboardCheck } from "lucide-react";
+import {ClipboardCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import CryptoJS from "crypto-js";
 import { useAuth } from "../../context/AuthContext"; // adjust path
@@ -33,10 +33,6 @@ export default function PersonalDetails() {
       }
     }
   }, [user]);
-
-
-
-  const removePerson = (id) => setPeople(people.filter((p) => p.id !== id));
 
   const handleChange = (id, field, value) =>
     setPeople(people.map((p) => (p.id === id ? { ...p, [field]: value } : p)));

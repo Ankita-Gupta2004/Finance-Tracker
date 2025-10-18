@@ -5,221 +5,109 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import { TrendingUp, Coins, Building, Bitcoin } from "lucide-react";
 
+import { useAuth } from "../../context/AuthContext";
+import CryptoJS from "crypto-js";
+
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
+
 export default function InvestmentsSection() {
+  const { user, loading } = useAuth();
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Please log in to access your investments.</p>;
+
   const [stocks, setStocks] = useState([
-    {
-      id: crypto.randomUUID(),
-      name: "",
-      amount: "",
-      units: "",
-      type: "Large Cap",
-    },
+    { id: crypto.randomUUID(), name: "", amount: "", units: "", type: "Large Cap" },
   ]);
   const [mfs, setMfs] = useState([
-    {
-      id: crypto.randomUUID(),
-      name: "",
-      amount: "",
-      fundType: "Equity",
-      category: "Large Cap",
-    },
+    { id: crypto.randomUUID(), name: "", amount: "", fundType: "Equity", category: "Large Cap" },
   ]);
-  const [fds, setFds] = useState([
-    { id: crypto.randomUUID(), name: "", amount: "", tenure: "" },
-  ]);
-  const [goldEtfs, setGoldEtfs] = useState([
-    { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-  ]);
-  const [cryptos, setCryptos] = useState([
-    { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-  ]);
-  const [reits, setReits] = useState([
-    { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-  ]);
-  const [debtFunds, setDebtFunds] = useState([
-    { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-  ]);
+  const [fds, setFds] = useState([{ id: crypto.randomUUID(), name: "", amount: "", tenure: "" }]);
+  const [goldEtfs, setGoldEtfs] = useState([{ id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
+  const [cryptos, setCryptos] = useState([{ id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
+  const [reits, setReits] = useState([{ id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
+  const [debtFunds, setDebtFunds] = useState([{ id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
 
   // ------------------ CRUD HANDLERS ------------------
   const addStock = () =>
-    setStocks([
-      ...stocks,
-      {
-        id: crypto.randomUUID(),
-        name: "",
-        amount: "",
-        units: "",
-        type: "Large Cap",
-      },
-    ]);
+    setStocks([...stocks, { id: crypto.randomUUID(), name: "", amount: "", units: "", type: "Large Cap" }]);
   const removeStock = (id) => setStocks(stocks.filter((s) => s.id !== id));
   const handleStockChange = (id, field, value) =>
     setStocks(stocks.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
 
   const addMf = () =>
-    setMfs([
-      ...mfs,
-      {
-        id: crypto.randomUUID(),
-        name: "",
-        amount: "",
-        fundType: "Equity",
-        category: "Large Cap",
-      },
-    ]);
+    setMfs([...mfs, { id: crypto.randomUUID(), name: "", amount: "", fundType: "Equity", category: "Large Cap" }]);
   const removeMf = (id) => setMfs(mfs.filter((m) => m.id !== id));
   const handleMfChange = (id, field, value) =>
     setMfs(mfs.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
 
-  const addFd = () =>
-    setFds([
-      ...fds,
-      { id: crypto.randomUUID(), name: "", amount: "", tenure: "" },
-    ]);
+  const addFd = () => setFds([...fds, { id: crypto.randomUUID(), name: "", amount: "", tenure: "" }]);
   const removeFd = (id) => setFds(fds.filter((f) => f.id !== id));
   const handleFdChange = (id, field, value) =>
     setFds(fds.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
 
-  const addGold = () =>
-    setGoldEtfs([
-      ...goldEtfs,
-      { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-    ]);
+  const addGold = () => setGoldEtfs([...goldEtfs, { id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
   const removeGold = (id) => setGoldEtfs(goldEtfs.filter((g) => g.id !== id));
   const handleGoldChange = (id, field, value) =>
-    setGoldEtfs(
-      goldEtfs.map((g) => (g.id === id ? { ...g, [field]: value } : g))
-    );
+    setGoldEtfs(goldEtfs.map((g) => (g.id === id ? { ...g, [field]: value } : g)));
 
-  const addCrypto = () =>
-    setCryptos([
-      ...cryptos,
-      { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-    ]);
+  const addCrypto = () => setCryptos([...cryptos, { id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
   const removeCrypto = (id) => setCryptos(cryptos.filter((c) => c.id !== id));
   const handleCryptoChange = (id, field, value) =>
-    setCryptos(
-      cryptos.map((c) => (c.id === id ? { ...c, [field]: value } : c))
-    );
+    setCryptos(cryptos.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
 
-  const addReit = () =>
-    setReits([
-      ...reits,
-      { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-    ]);
+  const addReit = () => setReits([...reits, { id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
   const removeReit = (id) => setReits(reits.filter((r) => r.id !== id));
   const handleReitChange = (id, field, value) =>
     setReits(reits.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
 
-  const handleDebtChange = (id, field, value) => {
-    setDebtFunds((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d))
-    );
-  };
-
-  const addDebt = () => {
-    setDebtFunds((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-    ]);
-  };
-
-  const removeDebt = (id) => {
-    setDebtFunds((prev) => prev.filter((d) => d.id !== id));
-  };
+  const handleDebtChange = (id, field, value) =>
+    setDebtFunds(debtFunds.map((d) => (d.id === id ? { ...d, [field]: value } : d)));
+  const addDebt = () => setDebtFunds([...debtFunds, { id: crypto.randomUUID(), name: "", amount: "", units: "" }]);
+  const removeDebt = (id) => setDebtFunds(debtFunds.filter((d) => d.id !== id));
 
   // Total Investments Calculation
   const totalInvestment =
-    // Stocks: units * amount
-    stocks.reduce(
-      (sum, s) =>
-        sum + (parseFloat(s.amount) || 0) * (parseFloat(s.units) || 0),
-      0
-    ) +
-    // Mutual Funds: amount
+    stocks.reduce((sum, s) => sum + (parseFloat(s.amount) || 0) * (parseFloat(s.units) || 0), 0) +
     mfs.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0) +
-    // FDs: amount
     fds.reduce((sum, f) => sum + (parseFloat(f.amount) || 0), 0) +
-    // Gold ETFs: units * amount
-    goldEtfs.reduce(
-      (sum, g) =>
-        sum + (parseFloat(g.amount) || 0) * (parseFloat(g.units) || 0),
-      0
-    ) +
-    // Crypto: units * amount
-    cryptos.reduce(
-      (sum, c) =>
-        sum + (parseFloat(c.amount) || 0) * (parseFloat(c.units) || 0),
-      0
-    ) +
-    // REITs: units * amount
-    reits.reduce(
-      (sum, r) =>
-        sum + (parseFloat(r.amount) || 0) * (parseFloat(r.units) || 0),
-      0
-    );
+    goldEtfs.reduce((sum, g) => sum + (parseFloat(g.amount) || 0) * (parseFloat(g.units) || 0), 0) +
+    cryptos.reduce((sum, c) => sum + (parseFloat(c.amount) || 0) * (parseFloat(c.units) || 0), 0) +
+    reits.reduce((sum, r) => sum + (parseFloat(r.amount) || 0) * (parseFloat(r.units) || 0), 0);
 
-  // ------------------ LOCAL STORAGE SAVE ------------------
+  // ------------------ PER-USER ENCRYPTED SAVE ------------------
   const handleSaveInvestments = () => {
-    const formData = { stocks, mfs, fds, goldEtfs, cryptos, reits, debtFunds };
-    localStorage.setItem("investmentData", JSON.stringify(formData));
-    alert("Your investments have been saved locally on this device!");
+    try {
+      const formData = { stocks, mfs, fds, goldEtfs, cryptos, reits, debtFunds };
+      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(formData), SECRET_KEY).toString();
+      localStorage.setItem(`investmentData_${user.uid}`, encrypted);
+      alert("Your investments have been saved securely!");
+    } catch (err) {
+      console.error("Failed to save investments", err);
+      alert("Failed to save investments.");
+    }
   };
 
-  // ------------------ LOAD SAVED DATA ------------------
+  // ------------------ LOAD PER-USER ENCRYPTED DATA ------------------
   useEffect(() => {
-    const saved = localStorage.getItem("investmentData");
+    const saved = localStorage.getItem(`investmentData_${user.uid}`);
     if (saved) {
-      const data = JSON.parse(saved);
-      setStocks(
-        data.stocks || [
-          {
-            id: crypto.randomUUID(),
-            name: "",
-            amount: "",
-            units: "",
-            type: "Large Cap",
-          },
-        ]
-      );
-      setMfs(
-        data.mfs || [
-          {
-            id: crypto.randomUUID(),
-            name: "",
-            amount: "",
-            fundType: "Equity",
-            category: "Large Cap",
-          },
-        ]
-      );
-      setFds(
-        data.fds || [
-          { id: crypto.randomUUID(), name: "", amount: "", tenure: "" },
-        ]
-      );
-      setGoldEtfs(
-        data.goldEtfs || [
-          { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-        ]
-      );
-      setCryptos(
-        data.cryptos || [
-          { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-        ]
-      );
-      setReits(
-        data.reits || [
-          { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-        ]
-      );
-      setDebtFunds(
-        data.debtFunds || [
-          { id: crypto.randomUUID(), name: "", amount: "", units: "" },
-        ]
-      );
+      try {
+        const bytes = CryptoJS.AES.decrypt(saved, SECRET_KEY);
+        const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setStocks(data.stocks || stocks);
+        setMfs(data.mfs || mfs);
+        setFds(data.fds || fds);
+        setGoldEtfs(data.goldEtfs || goldEtfs);
+        setCryptos(data.cryptos || cryptos);
+        setReits(data.reits || reits);
+        setDebtFunds(data.debtFunds || debtFunds);
+      } catch (err) {
+        console.error("Failed to decrypt investment data", err);
+      }
     }
-  }, []);
+  }, [user]);
+
+
 
   return (
     <div className="bg-gradient-to-b from-gray-100 to-gray-100 dark:from-black dark:to-gray-900 min-h-screen">

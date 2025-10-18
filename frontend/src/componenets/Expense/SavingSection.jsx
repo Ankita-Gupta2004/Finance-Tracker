@@ -1,19 +1,33 @@
 import { useState, useEffect } from "react";
 import { PlusCircle, Trash2, ClipboardCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import CryptoJS from "crypto-js";
+import { useAuth } from "../../context/AuthContext"; // adjust path
+
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 export default function SavingsSection() {
+  const { user, loading } = useAuth();
   const [savings, setSavings] = useState([
     { id: crypto.randomUUID(), name: "", amount: "", targetDate: "" },
   ]);
 
-  // Load saved data on mount
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Please log in to manage your savings.</p>;
+
+  // Load per-user encrypted savings on mount
   useEffect(() => {
-    const saved = localStorage.getItem("savingsData");
-    if (saved) {
-      setSavings(JSON.parse(saved));
+    const savedData = localStorage.getItem(`savingsData_${user.uid}`);
+    if (savedData) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedData, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setSavings(decrypted);
+      } catch (err) {
+        console.error("Failed to decrypt savings data:", err);
+      }
     }
-  }, []);
+  }, [user]);
 
   // Handlers
   const addSaving = () =>
@@ -30,8 +44,17 @@ export default function SavingsSection() {
     );
 
   const handleSaveSavings = () => {
-    localStorage.setItem("savingsData", JSON.stringify(savings));
-    alert("Your savings have been saved locally on this device!");
+    try {
+      const encrypted = CryptoJS.AES.encrypt(
+        JSON.stringify(savings),
+        SECRET_KEY
+      ).toString();
+      localStorage.setItem(`savingsData_${user.uid}`, encrypted);
+      alert("Your savings have been saved securely!");
+    } catch (err) {
+      console.error("Failed to encrypt/save savings data:", err);
+      alert("Unable to save savings data.");
+    }
   };
 
   return (

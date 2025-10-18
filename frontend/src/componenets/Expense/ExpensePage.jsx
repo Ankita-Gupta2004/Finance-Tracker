@@ -9,19 +9,39 @@ import FormGuidelines from "./FormGuidelines";
 import Insurance from "./Insurance";
 import LoanandDebt from "./LoanandDebt";
 import PersonalDetails from "./PersonalDetails";
+import CryptoJS from "crypto-js";
+import { useAuth } from "../../context/AuthContext"; // adjust path
+
+
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
+
 export default function FinanceForm() {
-  // ---------------- INCOME ----------------
- 
+  const { user, loading } = useAuth();
+
+  // Show loading while Firebase checks user
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Please log in to access your finance form.</p>;
+
+  // ---------------- STATE ----------------
   const [primaryIncome, setPrimaryIncome] = useState("");
-  const [otherIncome, setOtherIncome] = useState([
-    { id: 1, source: "", amount: "" },
-  ]);
+  const [otherIncome, setOtherIncome] = useState([{ id: Date.now(), source: "", amount: "" }]);
+  const [essentialExpenses, setEssentialExpenses] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [discretionaryExpenses, setDiscretionaryExpenses] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [educationExpenses, setEducationExpenses] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [familyExpenses, setFamilyExpenses] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [miscellaneousExpenses, setMiscellaneousExpenses] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [investments, setInvestments] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [insuranceExpenses, setInsuranceExpenses] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [debts, setDebts] = useState([{ id: Date.now(), name: "", amount: "" }]);
+  const [savings, setSavings] = useState([{ id: Date.now(), name: "", amount: "", targetDate: "" }]);
+
+  // ---------------- INCOME ----------------
+  const totalIncome =
+    Number(primaryIncome || 0) +
+    otherIncome.reduce((sum, i) => sum + Number(i.amount || 0), 0);
 
   const addOtherIncome = () => {
-    setOtherIncome([
-      ...otherIncome,
-      { id: Date.now(), source: "", amount: "" },
-    ]);
+    setOtherIncome([...otherIncome, { id: Date.now(), source: "", amount: "" }]);
   };
 
   const removeOtherIncome = (id) => {
@@ -29,212 +49,149 @@ export default function FinanceForm() {
   };
 
   const handleOtherIncomeChange = (id, field, value) => {
-    setOtherIncome(
-      otherIncome.map((i) => (i.id === id ? { ...i, [field]: value } : i))
-    );
+    setOtherIncome(otherIncome.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
   };
 
-  const totalIncome =
-    Number(primaryIncome || 0) +
-    otherIncome.reduce((sum, i) => sum + Number(i.amount || 0), 0);
-
-  // ------------ Add: save income handler -------------
   const handleSaveIncome = () => {
+    if (!user) return alert("Please log in to save your income.");
+
     try {
-      const saved = localStorage.getItem("financeData");
-      const existing = saved ? JSON.parse(saved) : {};
+      const key = `financeData_${user.uid}`;
+      const saved = localStorage.getItem(key);
+      const existing = saved
+        ? JSON.parse(CryptoJS.AES.decrypt(saved, SECRET_KEY).toString(CryptoJS.enc.Utf8))
+        : {};
+
       const updated = {
         ...existing,
         primaryIncome,
         otherIncome,
         totalIncome,
       };
-      localStorage.setItem("financeData", JSON.stringify(updated));
-      localStorage.setItem("lastModified", new Date().toISOString());
-      alert("Income saved locally on this device!");
+
+      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(updated), SECRET_KEY).toString();
+      localStorage.setItem(key, encrypted);
+      localStorage.setItem(`lastModified_${user.uid}`, new Date().toISOString());
+
+      alert("Income saved securely for your account!");
     } catch (err) {
       console.error(err);
-      alert("Unable to save income locally.");
+      alert("Unable to save income securely.");
     }
   };
-  // ---------------- EXPENSES ----------------
-  const [essentialExpenses, setEssentialExpenses] = useState([
-    { id: 1, name: "", amount: "" },
-  ]);
 
-  const [investments, setInvestments] = useState([
-    { id: 1, name: "", amount: "" },
-  ]);
-  const [discretionaryExpenses, setDiscretionaryExpenses] = useState([
-    { id: 1, name: "", amount: "" },
-  ]);
-  const [debts, setDebts] = useState([{ id: 1, name: "", amount: "" }]);
-  const [educationExpenses, setEducationExpenses] = useState([
-    { id: 1, name: "", amount: "" },
-  ]);
-  const [familyExpenses, setFamilyExpenses] = useState([
-    { id: 1, name: "", amount: "" },
-  ]);
-  const [insuranceExpenses, setInsuranceExpenses] = useState([
-    { id: 1, name: "", amount: "" },
-  ]);
-  const [miscellaneousExpenses, setMiscellaneousExpenses] = useState([
-    { id: 1, name: "", amount: "" },
-  ]);
-  const [savings, setSavings] = useState([
-    { id: 1, name: "", amount: "", targetDate: "" },
-  ]);
-
+  // ---------------- EXPENSE HANDLERS ----------------
   const addExpense = (section) => {
     const newRow = { id: Date.now(), name: "", amount: "" };
-    if (section === "essential")
-      setEssentialExpenses([...essentialExpenses, newRow]);
-    else if (section === "investments")
-      setInvestments([...investments, newRow]);
-    else if (section === "discretionary")
-      setDiscretionaryExpenses([...discretionaryExpenses, newRow]);
+    if (section === "essential") setEssentialExpenses([...essentialExpenses, newRow]);
+    else if (section === "investments") setInvestments([...investments, newRow]);
+    else if (section === "discretionary") setDiscretionaryExpenses([...discretionaryExpenses, newRow]);
     else if (section === "debts") setDebts([...debts, newRow]);
-    else if (section === "education")
-      setEducationExpenses([...educationExpenses, newRow]);
-    else if (section === "family")
-      setFamilyExpenses([...familyExpenses, newRow]);
-    else if (section === "insurance")
-      setInsuranceExpenses([...insuranceExpenses, newRow]);
-    else if (section === "miscellaneous")
-      setMiscellaneousExpenses([...miscellaneousExpenses, newRow]);
+    else if (section === "education") setEducationExpenses([...educationExpenses, newRow]);
+    else if (section === "family") setFamilyExpenses([...familyExpenses, newRow]);
+    else if (section === "insurance") setInsuranceExpenses([...insuranceExpenses, newRow]);
+    else if (section === "miscellaneous") setMiscellaneousExpenses([...miscellaneousExpenses, newRow]);
   };
 
   const removeExpense = (section, id) => {
-    if (section === "essential")
-      setEssentialExpenses(essentialExpenses.filter((e) => e.id !== id));
-    else if (section === "investments")
-      setInvestments(investments.filter((e) => e.id !== id));
-    else if (section === "discretionary")
-      setDiscretionaryExpenses(
-        discretionaryExpenses.filter((e) => e.id !== id)
-      );
+    if (section === "essential") setEssentialExpenses(essentialExpenses.filter((e) => e.id !== id));
+    else if (section === "investments") setInvestments(investments.filter((e) => e.id !== id));
+    else if (section === "discretionary") setDiscretionaryExpenses(discretionaryExpenses.filter((e) => e.id !== id));
     else if (section === "debts") setDebts(debts.filter((e) => e.id !== id));
-    else if (section === "education")
-      setEducationExpenses(educationExpenses.filter((e) => e.id !== id));
-    else if (section === "family")
-      setFamilyExpenses(familyExpenses.filter((e) => e.id !== id));
-    else if (section === "insurance")
-      setInsuranceExpenses(insuranceExpenses.filter((e) => e.id !== id));
-    else if (section === "miscellaneous")
-      setMiscellaneousExpenses(
-        miscellaneousExpenses.filter((e) => e.id !== id)
-      );
+    else if (section === "education") setEducationExpenses(educationExpenses.filter((e) => e.id !== id));
+    else if (section === "family") setFamilyExpenses(familyExpenses.filter((e) => e.id !== id));
+    else if (section === "insurance") setInsuranceExpenses(insuranceExpenses.filter((e) => e.id !== id));
+    else if (section === "miscellaneous") setMiscellaneousExpenses(miscellaneousExpenses.filter((e) => e.id !== id));
   };
 
   const handleExpenseChange = (section, id, field, value) => {
     if (section === "essential")
-      setEssentialExpenses(
-        essentialExpenses.map((e) =>
-          e.id === id ? { ...e, [field]: value } : e
-        )
-      );
+      setEssentialExpenses(essentialExpenses.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     else if (section === "investments")
-      setInvestments(
-        investments.map((e) => (e.id === id ? { ...e, [field]: value } : e))
-      );
+      setInvestments(investments.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     else if (section === "discretionary")
-      setDiscretionaryExpenses(
-        discretionaryExpenses.map((e) =>
-          e.id === id ? { ...e, [field]: value } : e
-        )
-      );
+      setDiscretionaryExpenses(discretionaryExpenses.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     else if (section === "debts")
       setDebts(debts.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     else if (section === "education")
-      setEducationExpenses(
-        educationExpenses.map((e) =>
-          e.id === id ? { ...e, [field]: value } : e
-        )
-      );
+      setEducationExpenses(educationExpenses.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     else if (section === "family")
-      setFamilyExpenses(
-        familyExpenses.map((e) => (e.id === id ? { ...e, [field]: value } : e))
-      );
+      setFamilyExpenses(familyExpenses.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     else if (section === "insurance")
-      setInsuranceExpenses(
-        insuranceExpenses.map((e) =>
-          e.id === id ? { ...e, [field]: value } : e
-        )
-      );
+      setInsuranceExpenses(insuranceExpenses.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     else if (section === "miscellaneous")
-      setMiscellaneousExpenses(
-        miscellaneousExpenses.map((e) =>
-          e.id === id ? { ...e, [field]: value } : e
-        )
-      );
+      setMiscellaneousExpenses(miscellaneousExpenses.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
   };
 
-  const totalEssential = essentialExpenses.reduce(
-    (sum, e) => sum + Number(e.amount || 0),
-    0
-  );
-  const totalInvestments = investments.reduce(
-    (sum, e) => sum + Number(e.amount || 0),
-    0
-  );
-
+  const totalEssential = essentialExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const totalInvestments = investments.reduce((sum, e) => sum + Number(e.amount || 0), 0);
   const netBalance = totalIncome - totalEssential - totalInvestments;
+
+  // ---------------- SAVE ENTIRE FORM ----------------
   const handleSave = () => {
-    const formData = {
-      primaryIncome,
-      otherIncome,
-      essentialExpenses,
-      discretionaryExpenses,
-      debts,
-      educationExpenses,
-      familyExpenses,
-      insuranceExpenses,
-      miscellaneousExpenses,
-      investments,
-      savings,
-      totalIncome,
-      totalEssential,
-      totalInvestments,
-      netBalance,
-    };
+    if (!user) return alert("Please log in to save your data.");
 
-    // Save to user's browser
-    localStorage.setItem("financeData", JSON.stringify(formData));
-    localStorage.setItem("lastModified", new Date().toISOString());
+    try {
+      const formData = {
+        primaryIncome,
+        otherIncome,
+        essentialExpenses,
+        discretionaryExpenses,
+        debts,
+        educationExpenses,
+        familyExpenses,
+        insuranceExpenses,
+        miscellaneousExpenses,
+        investments,
+        savings,
+        totalIncome,
+        totalEssential,
+        totalInvestments,
+        netBalance,
+      };
 
-    alert("Your data has been saved locally on this device!");
-  };
-  useEffect(() => {
-    const savedData = localStorage.getItem("financeData");
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      setPrimaryIncome(data.primaryIncome || "");
-      setOtherIncome(data.otherIncome || [{ id: 1, source: "", amount: "" }]);
-      setEssentialExpenses(
-        data.essentialExpenses || [{ id: 1, name: "", amount: "" }]
-      );
-      setDiscretionaryExpenses(
-        data.discretionaryExpenses || [{ id: 1, name: "", amount: "" }]
-      );
-      setDebts(data.debts || [{ id: 1, name: "", amount: "" }]);
-      setEducationExpenses(
-        data.educationExpenses || [{ id: 1, name: "", amount: "" }]
-      );
-      setFamilyExpenses(
-        data.familyExpenses || [{ id: 1, name: "", amount: "" }]
-      );
-      setInsuranceExpenses(
-        data.insuranceExpenses || [{ id: 1, name: "", amount: "" }]
-      );
-      setMiscellaneousExpenses(
-        data.miscellaneousExpenses || [{ id: 1, name: "", amount: "" }]
-      );
-      setInvestments(data.investments || [{ id: 1, name: "", amount: "" }]);
-      setSavings(
-        data.savings || [{ id: 1, name: "", amount: "", targetDate: "" }]
-      );
+      const key = `financeData_${user.uid}`;
+      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(formData), SECRET_KEY).toString();
+      localStorage.setItem(key, encrypted);
+      localStorage.setItem(`lastModified_${user.uid}`, new Date().toISOString());
+
+      alert("Your data has been saved securely for your account!");
+    } catch (err) {
+      console.error(err);
+      alert("Unable to save your data securely.");
     }
-  }, []);
+  };
+
+  // ---------------- LOAD DATA ON MOUNT ----------------
+  useEffect(() => {
+    if (!user) return;
+
+    const key = `financeData_${user.uid}`;
+    const savedData = localStorage.getItem(key);
+
+    if (savedData) {
+      try {
+        const decrypted = JSON.parse(
+          CryptoJS.AES.decrypt(savedData, SECRET_KEY).toString(CryptoJS.enc.Utf8)
+        );
+
+        setPrimaryIncome(decrypted.primaryIncome || "");
+        setOtherIncome(decrypted.otherIncome || [{ id: Date.now(), source: "", amount: "" }]);
+        setEssentialExpenses(decrypted.essentialExpenses || [{ id: Date.now(), name: "", amount: "" }]);
+        setDiscretionaryExpenses(decrypted.discretionaryExpenses || [{ id: Date.now(), name: "", amount: "" }]);
+        setDebts(decrypted.debts || [{ id: Date.now(), name: "", amount: "" }]);
+        setEducationExpenses(decrypted.educationExpenses || [{ id: Date.now(), name: "", amount: "" }]);
+        setFamilyExpenses(decrypted.familyExpenses || [{ id: Date.now(), name: "", amount: "" }]);
+        setInsuranceExpenses(decrypted.insuranceExpenses || [{ id: Date.now(), name: "", amount: "" }]);
+        setMiscellaneousExpenses(decrypted.miscellaneousExpenses || [{ id: Date.now(), name: "", amount: "" }]);
+        setInvestments(decrypted.investments || [{ id: Date.now(), name: "", amount: "" }]);
+        setSavings(decrypted.savings || [{ id: Date.now(), name: "", amount: "", targetDate: "" }]);
+      } catch (err) {
+        console.error("Failed to decrypt finance data", err);
+      }
+    }
+  }, [user]);
+
 
   return (
     <>

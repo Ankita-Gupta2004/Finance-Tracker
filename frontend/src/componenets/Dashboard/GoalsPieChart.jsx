@@ -1,11 +1,20 @@
+// GoalsPieChart.jsx
 import React, { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import CryptoJS from "crypto-js";
+import { useAuth } from "../../context/AuthContext"; // adjust path
 
 const COLORS_LIGHT = ["#10B981", "#3B82F6", "#F59E0B"];
 const COLORS_DARK = ["#22C55E", "#3B82F6", "#EC4899"];
 
-const GoalsPieChart = ({ shortTermGoals, midTermGoals, longTermGoals }) => {
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
+
+export default function GoalsPieChart() {
+  const { user, loading } = useAuth();
   const [isDark, setIsDark] = useState(false);
+  const [shortTermGoals, setShortTermGoals] = useState([]);
+  const [midTermGoals, setMidTermGoals] = useState([]);
+  const [longTermGoals, setLongTermGoals] = useState([]);
 
   // Detect dark mode
   useEffect(() => {
@@ -21,6 +30,24 @@ const GoalsPieChart = ({ shortTermGoals, midTermGoals, longTermGoals }) => {
         .matchMedia("(prefers-color-scheme: dark)")
         .removeEventListener("change", listener);
   }, []);
+
+  // Load encrypted goals from localStorage
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const savedData = localStorage.getItem(`goalsData_${user.uid}`);
+    if (savedData) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedData, SECRET_KEY + user.uid);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setShortTermGoals(decrypted.shortTermGoals || []);
+        setMidTermGoals(decrypted.midTermGoals || []);
+        setLongTermGoals(decrypted.longTermGoals || []);
+      } catch (err) {
+        console.error("Failed to decrypt goals data:", err);
+      }
+    }
+  }, [user?.uid]);
 
   // Aggregate goal amounts
   const chartData = [
@@ -47,6 +74,9 @@ const GoalsPieChart = ({ shortTermGoals, midTermGoals, longTermGoals }) => {
     },
   ];
 
+  if (loading) return <p className="text-gray-500">Loading goals...</p>;
+  if (!user) return <p className="text-gray-500">Please log in to view goals chart.</p>;
+
   return (
     <div className="w-full h-80 flex items-center justify-center">
       <ResponsiveContainer width="100%" height="100%">
@@ -61,8 +91,8 @@ const GoalsPieChart = ({ shortTermGoals, midTermGoals, longTermGoals }) => {
             outerRadius={80}
             paddingAngle={3}
             cornerRadius={8}
-            startAngle={90} // rotate start position
-            endAngle={450} // complete circle anticlockwise
+            startAngle={0}
+            endAngle={730}
             label={({ name, percent }) =>
               `${name} ${(percent * 100).toFixed(0)}%`
             }
@@ -92,6 +122,4 @@ const GoalsPieChart = ({ shortTermGoals, midTermGoals, longTermGoals }) => {
       </ResponsiveContainer>
     </div>
   );
-};
-
-export default GoalsPieChart;
+}

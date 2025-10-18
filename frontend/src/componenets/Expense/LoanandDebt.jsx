@@ -1,29 +1,39 @@
 import { useState, useEffect } from "react";
 import { PlusCircle, Trash2, ClipboardCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext"; // adjust path
+import CryptoJS from "crypto-js";
 
-export default function LoanandDebt() {
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
+
+export default function LoanAndDebt() {
+  const { user, loading } = useAuth();
   const [loans, setLoans] = useState([
-    { id: 1, lender: "", type: "Personal", amount: "", emi: "", dueDate: "" },
+    { id: Date.now(), lender: "", type: "Personal", amount: "", emi: "", dueDate: "", paid: "" },
   ]);
 
-  // Load from localStorage
+  // Show loading while Firebase checks user
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Please log in to manage your loans.</p>;
+
+  // Load per-user encrypted data
   useEffect(() => {
-    const savedData = localStorage.getItem("loansData");
-    if (savedData) setLoans(JSON.parse(savedData));
-  }, []);
+    const savedData = localStorage.getItem(`loansData_${user.uid}`);
+    if (savedData) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedData, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setLoans(decrypted);
+      } catch (err) {
+        console.error("Failed to decrypt loans data", err);
+      }
+    }
+  }, [user]);
 
   const addLoan = () =>
     setLoans([
       ...loans,
-      {
-        id: Date.now(),
-        lender: "",
-        type: "Personal",
-        amount: "",
-        emi: "",
-        dueDate: "",
-      },
+      { id: Date.now(), lender: "", type: "Personal", amount: "", emi: "", dueDate: "", paid: "" },
     ]);
 
   const removeLoan = (id) => setLoans(loans.filter((l) => l.id !== id));
@@ -32,10 +42,15 @@ export default function LoanandDebt() {
     setLoans(loans.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
 
   const handleSave = () => {
-    localStorage.setItem("loansData", JSON.stringify(loans));
-    alert("Loan & Debt data saved locally!");
+    try {
+      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(loans), SECRET_KEY).toString();
+      localStorage.setItem(`loansData_${user.uid}`, encrypted);
+      alert("Loan & Debt data saved securely!");
+    } catch (err) {
+      console.error("Failed to encrypt/save loans data", err);
+    }
   };
-  // Calculate total remaining loan
+
   const totalRemaining = loans.reduce((sum, l) => {
     const amount = parseFloat(l.amount) || 0;
     const paid = parseFloat(l.paid) || 0;
@@ -47,7 +62,7 @@ export default function LoanandDebt() {
       initial={{ opacity: 0, y: -20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="bg-gradient-to-tr from-white to-gray-100 dark:from-black/40 dark:to-gray-900 p-8 rounded-2xl shadow-lg space-y-6 border border-white dark:border-gray-800 border border-white dark:border-gray-800"
+      className="bg-gradient-to-tr from-white to-gray-100 dark:from-black/40 dark:to-gray-900 p-8 rounded-2xl shadow-lg space-y-6 border border-white dark:border-gray-800"
     >
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
         Loans & Debts
@@ -114,7 +129,7 @@ export default function LoanandDebt() {
           <PlusCircle /> Add Loan
         </button>
       </div>
-      {/* Remaining Loan Summary */}
+
       <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-950 rounded-lg text-right">
         <span className="font-semibold text-gray-900 dark:text-gray-100">
           Total Remaining Loan: ₹{totalRemaining.toLocaleString()}

@@ -1,20 +1,28 @@
-// InsuranceDonutCard.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import {
-  ClipboardCheck,
-
-} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import CryptoJS from "crypto-js";
 
 const COLORS = ["#4ade80", "#fbbf24", "#3b82f6", "#ef4444", "#a855f7"];
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 export default function InsuranceDonutCard() {
+  const { user, loading } = useAuth();
   const [insurances, setInsurances] = useState([]);
 
   useEffect(() => {
-    const savedData = localStorage.getItem("insurancesData");
-    if (savedData) setInsurances(JSON.parse(savedData));
-  }, []);
+    if (!user) return;
+    const savedData = localStorage.getItem(`insurancesData_${user.uid}`);
+    if (savedData) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedData, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setInsurances(decrypted);
+      } catch (err) {
+        console.error("Failed to decrypt insurance data", err);
+      }
+    }
+  }, [user]);
 
   const chartData = useMemo(() => {
     const grouped = {};
@@ -45,6 +53,9 @@ export default function InsuranceDonutCard() {
     return null;
   };
 
+  if (loading) return <p>Loading chart...</p>;
+  if (!user) return <p>Please log in to view your insurance chart.</p>;
+
   return (
     <div className="bg-white dark:bg-[#121111] rounded-xl shadow-lg flex flex-col items-center justify-center p-6 w-full h-[350px]">
       <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">
@@ -57,12 +68,7 @@ export default function InsuranceDonutCard() {
         </p>
       ) : (
         <>
-          {/* Total Premium + Policies Inline */}
           <div className="mb-4 flex items-center gap-2 text-gray-700 dark:text-gray-300 font-bold text-lg">
-            <ClipboardCheck
-              size={20}
-              className="text-emerald-500 dark:text-emerald-400"
-            />
             <span>
               Total Premium: ₹{totalPremium.toLocaleString()} |{" "}
               {insurances.length}{" "}
@@ -70,7 +76,6 @@ export default function InsuranceDonutCard() {
             </span>
           </div>
 
-          {/* Donut Chart */}
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -99,7 +104,6 @@ export default function InsuranceDonutCard() {
             </ResponsiveContainer>
           </div>
 
-          {/* Legend */}
           <div className="flex flex-wrap gap-3 mt-4 justify-center">
             {chartData.map((entry, idx) => (
               <div

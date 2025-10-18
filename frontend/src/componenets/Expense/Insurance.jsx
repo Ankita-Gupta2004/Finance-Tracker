@@ -1,17 +1,34 @@
 import { useState, useEffect } from "react";
 import { PlusCircle, Trash2, ClipboardCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext"; // adjust path
+import CryptoJS from "crypto-js";
+
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 export default function Insurance() {
+  const { user, loading } = useAuth();
   const [insurances, setInsurances] = useState([
-    { id: 1, provider: "", type: "Life", premium: "", maturity: "" },
+    { id: Date.now(), provider: "", type: "Life", premium: "", maturity: "" },
   ]);
 
-  // Load from localStorage
+  // Show loading while Firebase checks user
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Please log in to manage your insurances.</p>;
+
+  // Load encrypted data per user
   useEffect(() => {
-    const savedData = localStorage.getItem("insurancesData");
-    if (savedData) setInsurances(JSON.parse(savedData));
-  }, []);
+    const savedData = localStorage.getItem(`insurancesData_${user.uid}`);
+    if (savedData) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedData, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setInsurances(decrypted);
+      } catch (err) {
+        console.error("Failed to decrypt insurance data", err);
+      }
+    }
+  }, [user]);
 
   const addInsurance = () =>
     setInsurances([
@@ -28,8 +45,16 @@ export default function Insurance() {
     );
 
   const handleSave = () => {
-    localStorage.setItem("insurancesData", JSON.stringify(insurances));
-    alert("Insurance data saved locally!");
+    try {
+      const encrypted = CryptoJS.AES.encrypt(
+        JSON.stringify(insurances),
+        SECRET_KEY
+      ).toString();
+      localStorage.setItem(`insurancesData_${user.uid}`, encrypted);
+      alert("Insurance data saved securely!");
+    } catch (err) {
+      console.error("Failed to encrypt/save insurance data", err);
+    }
   };
 
   return (
@@ -56,7 +81,9 @@ export default function Insurance() {
           />
           <select
             value={i.type}
-            onChange={(e) => handleInsuranceChange(i.id, "type", e.target.value)}
+            onChange={(e) =>
+              handleInsuranceChange(i.id, "type", e.target.value)
+            }
             className="col-span-2 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
           >
             <option>Life</option>
@@ -101,18 +128,16 @@ export default function Insurance() {
         >
           <PlusCircle /> Add Insurance
         </button>
-        
       </div>
 
       <div className="flex justify-end mt-4">
-  <button
-    onClick={handleSave}
-    className="flex items-center gap-2 bg-emerald-800 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition"
-  >
-    <ClipboardCheck /> Save Insurances
-  </button>
-</div>
-
+        <button
+          onClick={handleSave}
+          className="flex items-center gap-2 bg-emerald-800 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition"
+        >
+          <ClipboardCheck /> Save Insurances
+        </button>
+      </div>
     </motion.div>
   );
 }

@@ -14,7 +14,7 @@ import ModernCTA from "./ModerCTA";
 import Footer from "../Footer";
 import { useAuth } from "../../context/AuthContext"; // assuming you have auth context
 
-const SECRET_KEY = "YOUR_SECRET_KEY"; // replace with a secure key
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;// replace with a secure key
 
 // ------------------ GoalCard Component ------------------
 function GoalCard({

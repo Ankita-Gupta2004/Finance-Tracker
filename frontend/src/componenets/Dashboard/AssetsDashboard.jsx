@@ -1,7 +1,15 @@
-// AssetsDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { Home, CreditCard, Banknote, Car, Diamond, Archive } from "lucide-react";
+import {
+  Home,
+  CreditCard,
+  Banknote,
+  Car,
+  Diamond,
+  Archive,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import CryptoJS from "crypto-js"; // NEW
+import { useAuth } from "../../context/AuthContext"; // NEW
 
 // Map asset types to icons and colors
 const ASSET_ICONS = {
@@ -15,12 +23,30 @@ const ASSET_ICONS = {
 };
 
 export default function AssetsDashboard() {
+  const { user, loading } = useAuth();
   const [assets, setAssets] = useState([]);
+  const SECRET_KEY = import.meta.env.VITE_ASSET_SECRET_KEY; // same key as in AssetsCard
+
+  // Loading state
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Please log in to view your assets.</p>;
 
   useEffect(() => {
-    const savedData = localStorage.getItem("assetsData");
-    if (savedData) setAssets(JSON.parse(savedData));
-  }, []);
+    if (!user) return;
+
+    const storageKey = `assetsData_${user.uid}`;
+    const encrypted = localStorage.getItem(storageKey);
+    if (encrypted) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setAssets(decrypted);
+      } catch (err) {
+        console.error("Failed to decrypt assets:", err);
+        setAssets([]);
+      }
+    }
+  }, [user, SECRET_KEY]);
 
   return (
     <div className="h-full flex flex-col">
@@ -35,7 +61,8 @@ export default function AssetsDashboard() {
           </p>
         )}
         {assets.map((a) => {
-          const { icon: Icon, color } = ASSET_ICONS[a.type] || ASSET_ICONS.Other;
+          const { icon: Icon, color } =
+            ASSET_ICONS[a.type] || ASSET_ICONS.Other;
           return (
             <motion.div
               key={a.id}
@@ -44,7 +71,9 @@ export default function AssetsDashboard() {
               transition={{ duration: 0.3 }}
               className="bg-white dark:bg-black p-4 rounded-xl shadow flex items-center gap-4 hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className={`w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 ${color}`}>
+              <div
+                className={`w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 ${color}`}
+              >
                 <Icon className="w-6 h-6" />
               </div>
               <div className="flex-1">
@@ -56,8 +85,14 @@ export default function AssetsDashboard() {
                     ₹{Number(a.value || 0).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{a.type}</p>
-                {a.note && <p className="text-xs text-gray-400 dark:text-gray-500 italic">{a.note}</p>}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {a.type}
+                </p>
+                {a.note && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+                    {a.note}
+                  </p>
+                )}
               </div>
             </motion.div>
           );

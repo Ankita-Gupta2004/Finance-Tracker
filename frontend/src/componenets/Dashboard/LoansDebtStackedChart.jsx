@@ -9,15 +9,32 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import { useAuth } from "../../context/AuthContext";
+import CryptoJS from "crypto-js";
+
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 export default function LoansDebtStackedChart() {
+  const { user, loading } = useAuth();
   const [loansData, setLoansData] = useState([]);
 
-  // Load loans from localStorage
+  // Show loading while Firebase checks user
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>Please log in to view your loans chart.</p>;
+
+  // Load per-user encrypted data
   useEffect(() => {
-    const savedData = localStorage.getItem("loansData");
-    if (savedData) setLoansData(JSON.parse(savedData));
-  }, []);
+    const savedData = localStorage.getItem(`loansData_${user.uid}`);
+    if (savedData) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedData, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        setLoansData(decrypted);
+      } catch (err) {
+        console.error("Failed to decrypt loans data", err);
+      }
+    }
+  }, [user]);
 
   // Prepare chart data
   const chartData = useMemo(() => {
@@ -25,8 +42,7 @@ export default function LoansDebtStackedChart() {
 
     const types = ["Personal", "Home", "Vehicle", "Education", "Other"];
 
-    // Group amounts by type
-    const data = types.map((type) => {
+    return types.map((type) => {
       const filtered = loansData.filter((loan) => loan.type === type);
       const totalAmount = filtered.reduce(
         (sum, l) => sum + Number(l.amount || 0),
@@ -38,14 +54,9 @@ export default function LoansDebtStackedChart() {
         details: filtered, // for tooltip
       };
     });
-
-    return data;
   }, [loansData]);
 
-  if (!loansData || loansData.length === 0)
-    return <p className="text-gray-500">No loan data found.</p>;
-
-  // Custom tooltip to show lender & amount
+  // Custom tooltip showing lender details
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const loanDetails = payload[0].payload.details;
@@ -64,6 +75,9 @@ export default function LoansDebtStackedChart() {
     return null;
   };
 
+  if (!loansData || loansData.length === 0)
+    return <p className="text-gray-500">No loan data found.</p>;
+
   return (
     <div className="bg-white dark:bg-[#121111] rounded-xl shadow-lg flex flex-col items-center justify-center p-6 w-full h-[350px]">
       <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
@@ -74,29 +88,17 @@ export default function LoansDebtStackedChart() {
           data={chartData}
           margin={{ top: 20, right: 20, left: 0, bottom: 20 }}
         >
-          {/* Gradient Definition */}
           <defs>
             <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
               <stop offset="95%" stopColor="#16a34a" stopOpacity={0.4} />
             </linearGradient>
           </defs>
-
-<CartesianGrid
-              strokeDasharray="4 4"
-              stroke="#bdbdbd"
-              strokeOpacity={0.3}
-            />            <XAxis dataKey="type" tick={{ fill: "#6b7280", fontSize: 14 }} />
+          <CartesianGrid strokeDasharray="4 4" stroke="#bdbdbd" strokeOpacity={0.3} />
+          <XAxis dataKey="type" tick={{ fill: "#6b7280", fontSize: 14 }} />
           <YAxis tick={{ fill: "#6b7280", fontSize: 14 }} />
           <Tooltip content={<CustomTooltip />} />
-
-          <Bar
-            dataKey="amount"
-            fill="url(#barGradient)"
-            radius={[10, 10, 0, 0]}
-            isAnimationActive={true}
-            animationDuration={1000}
-          />
+          <Bar dataKey="amount" fill="url(#barGradient)" radius={[10, 10, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

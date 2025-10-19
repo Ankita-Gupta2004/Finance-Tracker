@@ -1,5 +1,5 @@
-import { InspectIcon, OptionIcon, PercentIcon, PieChartIcon, Table2 } from "lucide-react";
 import React, { useEffect, useState, useMemo } from "react";
+import { InspectIcon, PercentIcon, Table2 } from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -8,8 +8,12 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useAuth } from "../../context/AuthContext";
+import CryptoJS from "crypto-js";
 
 export default function SipAllocatorReport() {
+  const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
+  const { user } = useAuth();
   const [mfs, setMfs] = useState([]);
   const [optimizerMfs, setOptimizerMfs] = useState([]);
   const [age, setAge] = useState(30);
@@ -25,10 +29,24 @@ export default function SipAllocatorReport() {
   ];
 
   // Normalize MFs and set initial states
-  useEffect(() => {
-    const savedInv = JSON.parse(localStorage.getItem("investmentData") || "{}");
-    const savedMfs = savedInv?.mfs || [];
 
+  useEffect(() => {
+    if (!user) return;
+
+    // --- Load Investments ---
+    const savedEncrypted = localStorage.getItem(`investmentData_${user.uid}`);
+    let savedMfs = [];
+    if (savedEncrypted) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedEncrypted, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8)) || {};
+        savedMfs = decrypted.mfs || [];
+      } catch (err) {
+        console.error("Failed to decrypt investment data:", err);
+      }
+    }
+
+    // --- Normalize MFs (same as before) ---
     const normalized = savedMfs.map((m) => {
       const amount = Number(m.amount || 0);
       const rawCategory =
@@ -69,11 +87,21 @@ export default function SipAllocatorReport() {
     const sum = normalized.reduce((s, x) => s + (x.amount || 0), 0);
     setTotalMf(sum);
 
-    const savedPerson = JSON.parse(
-      localStorage.getItem("personalDetails") || "null"
-    )?.[0];
-    if (savedPerson) setAge(Number(savedPerson.age) || 30);
-  }, []);
+    // --- Load Age from Personal Details ---
+    const savedPersonEncrypted = localStorage.getItem(
+      `personalDetails_${user.uid}`
+    );
+    if (savedPersonEncrypted) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(savedPersonEncrypted, SECRET_KEY);
+        const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        const firstPerson = decrypted?.[0];
+        if (firstPerson?.age) setAge(Number(firstPerson.age));
+      } catch (err) {
+        console.error("Failed to decrypt personal details:", err);
+      }
+    }
+  }, [user]);
 
   // Age-based recommended allocation
   const ageAlloc = (age) => {
@@ -198,7 +226,7 @@ export default function SipAllocatorReport() {
     : Math.max(0, totalMfOptimizer - optimizerFlexiAmount);
 
   // categories to display based on adjustedRecommended
-  const categoriesOrdered = Object.keys(recommended);
+  // const categoriesOrdered = Object.keys(recommended);
   const categoriesOrderedUsed = Object.keys(adjustedRecommended);
 
   // user allocation map filtered (for charts)
@@ -252,7 +280,7 @@ export default function SipAllocatorReport() {
         {/* Investments Table (styled like AssetsReport) */}
         <div className="overflow-x-auto bg-white dark:bg-gray-950 rounded-2xl shadow-lg p-6 border border-gray-300 dark:border-gray-800 pb-2">
           <div className="flex items-center gap-2 mb-4">
-          <Table2 className="text-emerald-500" />
+            <Table2 className="text-emerald-500" />
             <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
               Funds Breakdown
             </h2>
@@ -323,9 +351,7 @@ export default function SipAllocatorReport() {
         {/* Pie Charts (kept same sizing but card visuals match AssetsReport) */}
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-1/2 bg-white dark:bg-gray-950 rounded-2xl p-6 shadow-lg border border-white dark:border-gray-700">
-          
             <h3 className="text-xl font-semibold text-center mb-6 text-gray-900 dark:text-white">
-            
               Your Current Allocation
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -364,7 +390,9 @@ export default function SipAllocatorReport() {
             <h3 className="text-xl font-semibold text-center mb-2 text-gray-900 dark:text-white">
               Required Contribution
             </h3>
-            <p className="text-center text-gray-500">"Depends on your age risk factor"</p>
+            <p className="text-center text-gray-500">
+              "Depends on your age risk factor"
+            </p>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -397,11 +425,10 @@ export default function SipAllocatorReport() {
 
         {/* Allocation Insights (table styled like AssetsReport) */}
         <div className="bg-white dark:bg-gray-950 rounded-2xl p-6 shadow-lg border border-gray-300 dark:border-gray-800 pb-2">
-        
           <h3 className="flex items-center gap-2 text-xl font-semibold mb-4 text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-600 pb-2">
-  <PercentIcon className="text-emerald-500 w-5 h-5" />
-  Allocation Insights
-</h3>
+            <PercentIcon className="text-emerald-500 w-5 h-5" />
+            Allocation Insights
+          </h3>
 
           <table className="w-full text-left text-sm ">
             <thead className="bg-gray-200 dark:bg-gray-800">
@@ -473,10 +500,9 @@ export default function SipAllocatorReport() {
         <div className="bg-white dark:bg-gray-950 rounded-2xl p-6 shadow-lg border border-gray-300 dark:border-gray-800 pb-2">
           <div className="flex items-center justify-between mb-4 border-b border-gray-300 dark:border-gray-600 pb-2">
             <h3 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white">
-  <InspectIcon className="text-emerald-500 w-5 h-5" />
-  Allocation Optimizer
-</h3>
-
+              <InspectIcon className="text-emerald-500 w-5 h-5" />
+              Allocation Optimizer
+            </h3>
 
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">

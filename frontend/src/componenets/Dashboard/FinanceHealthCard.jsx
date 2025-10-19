@@ -25,18 +25,13 @@ export default function FinanceHealthCard() {
     } catch (err) {
       console.error("Asset decryption failed:", err);
     }
-    const totalAssets = assetsData.reduce(
-      (sum, a) => sum + Number(a.value || 0),
-      0
-    );
+    const totalAssets = assetsData.reduce((sum, a) => sum + Number(a.value || 0), 0);
 
     // ---------- Load Finance Data ----------
     let financeData = {};
     let totalExpense = 0;
     try {
-      const encryptedFinanceData = localStorage.getItem(
-        `financeData_${user.uid}`
-      );
+      const encryptedFinanceData = localStorage.getItem(`financeData_${user.uid}`);
       if (encryptedFinanceData) {
         const bytes = CryptoJS.AES.decrypt(encryptedFinanceData, SECRET_KEY);
         const decryptedFinanceData = bytes.toString(CryptoJS.enc.Utf8);
@@ -52,10 +47,7 @@ export default function FinanceHealthCard() {
           ...(financeData.miscellaneousExpenses || []),
         ];
 
-        totalExpense = allExpenses.reduce(
-          (sum, e) => sum + Number(e.amount || 0),
-          0
-        );
+        totalExpense = allExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
       }
     } catch (err) {
       console.error("Error decrypting finance data:", err);
@@ -65,9 +57,7 @@ export default function FinanceHealthCard() {
     let investments = [];
     let totalInvestments = 0;
     try {
-      const savedInvestments = localStorage.getItem(
-        `investmentData_${user.uid}`
-      );
+      const savedInvestments = localStorage.getItem(`investmentData_${user.uid}`);
       if (savedInvestments) {
         const bytes = CryptoJS.AES.decrypt(savedInvestments, SECRET_KEY);
         const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8)) || {};
@@ -80,10 +70,7 @@ export default function FinanceHealthCard() {
           ...(data.reits || []),
           ...(data.debtFunds || []),
         ];
-        totalInvestments = investments.reduce(
-          (sum, i) => sum + Number(i.amount || 0),
-          0
-        );
+        totalInvestments = investments.reduce((sum, i) => sum + Number(i.amount || 0), 0);
       }
     } catch (err) {
       console.error("Failed to load investments:", err);
@@ -111,9 +98,7 @@ export default function FinanceHealthCard() {
     let insurancesData = [];
     let totalPremiums = 0;
     try {
-      const savedInsurances = localStorage.getItem(
-        `insurancesData_${user.uid}`
-      );
+      const savedInsurances = localStorage.getItem(`insurancesData_${user.uid}`);
       if (savedInsurances) {
         const bytes = CryptoJS.AES.decrypt(savedInsurances, SECRET_KEY);
         insurancesData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8)) || [];
@@ -141,17 +126,14 @@ export default function FinanceHealthCard() {
         allGoals = [...shortTermGoals, ...midTermGoals, ...longTermGoals];
 
         // ✅ Only valid goals with targetAmount > 0
-        const validGoals = allGoals.filter(
-          (g) => parseFloat(g.targetAmount) > 0
-        );
+        const validGoals = allGoals.filter(g => parseFloat(g.targetAmount) > 0);
 
         if (validGoals.length > 0) {
-          goalCompletion =
-            validGoals.reduce((sum, g) => {
-              const curr = parseFloat(g.currentSavings) || 0;
-              const target = parseFloat(g.targetAmount) || 0;
-              return sum + Math.min((curr / target) * 100, 100);
-            }, 0) / validGoals.length;
+          goalCompletion = validGoals.reduce((sum, g) => {
+            const curr = parseFloat(g.currentSavings) || 0;
+            const target = parseFloat(g.targetAmount) || 0;
+            return sum + Math.min((curr / target) * 100, 100);
+          }, 0) / validGoals.length;
 
           goalCompletion = Math.round(goalCompletion); // ✅ Round to nearest integer
         }
@@ -162,16 +144,15 @@ export default function FinanceHealthCard() {
 
     // ---------- Health Score Formula ----------
     let score = 0;
-    if (totalAssets > 0) {
-      score += Math.min(((totalAssets - totalExpense) / totalAssets) * 40, 40);
-    }
-    score += Math.min(goalCompletion * 0.25, 25);
-    score += Math.min((totalInvestments / (totalAssets || 1)) * 15, 15);
-    score -= Math.min((totalLoans / (totalAssets || 1)) * 20, 20);
-    score -= Math.min((totalPremiums / (totalAssets || 1)) * 5, 5);
+if (totalAssets > 0) {
+  score += Math.min(((totalAssets - totalExpense) / totalAssets) * 40, 40);
+}
+score += Math.min(goalCompletion * 0.25, 25);
+score += Math.min((totalInvestments / (totalAssets || 1)) * 15, 15);
+score -= Math.min((totalLoans / (totalAssets || 1)) * 20, 20);
+score -= Math.min((totalPremiums / (totalAssets || 1)) * 5, 5);
 
-    score = Math.max(0, Math.min(100, score));
-
+score = Math.max(0, Math.min(100, score));
     setHealthScore(score);
 
     // ---------- Alerts ----------
@@ -200,7 +181,17 @@ export default function FinanceHealthCard() {
         type: "warning",
         message: "Goal completion is below 50%. Review your goals progress.",
       });
-    }
+    } else if (goalCompletion === 100) {
+      newAlerts.push({
+        type: "good",
+        message: "All your goals are fully achieved! Congrats!",
+      });
+    } else if (goalCompletion > 50) {
+      newAlerts.push({
+        type: "good",
+        message: "Goal completion is above 50%. Keep going!",
+      });
+    } 
 
     if (totalLoans > totalAssets * 0.5) {
       newAlerts.push({

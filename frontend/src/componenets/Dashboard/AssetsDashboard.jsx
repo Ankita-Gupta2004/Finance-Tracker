@@ -25,7 +25,7 @@ const ASSET_ICONS = {
 export default function AssetsDashboard() {
   const { user, loading } = useAuth();
   const [assets, setAssets] = useState([]);
-  const SECRET_KEY = import.meta.env.VITE_ASSET_SECRET_KEY; // same key as in AssetsCard
+  const SECRET_KEY = import.meta.env.VITE_SECRET_KEY; // same key as in AssetsCard
 
   // Loading state
   if (loading) return <p>Loading...</p>;

@@ -3,36 +3,66 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { BarChart3, PieChart as PieIcon } from "lucide-react";
+import CryptoJS from "crypto-js";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AssetsReport() {
   const [assets, setAssets] = useState([]);
   const [total, setTotal] = useState(0);
+  const { user, loading } = useAuth();
+  const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("assetsData")) || [];
-    setAssets(saved);
-    const totalVal = saved.reduce((sum, a) => sum + Number(a.value || 0), 0);
-    setTotal(totalVal);
-  }, []);
+    if (!user) return;
 
-  const COLORS = [
-    "#10B981", // emerald
-    "#3B82F6", // blue
-    "#F59E0B", // amber
-    "#EF4444", // red
-    "#8B5CF6", // violet
-    "#14B8A6", // teal
-    "#F43F5E", // rose
-    "#22C55E", // green
-    "#EAB308", // yellow
-    "#0EA5E9", // sky
-  ];
+    const storageKey = `assetsData_${user.uid}`;
+    const encrypted = localStorage.getItem(storageKey);
+    let savedAssets = [];
+
+    if (encrypted) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+        savedAssets = JSON.parse(decrypted) || [];
+      } catch (err) {
+        console.error("Failed to decrypt assets:", err);
+        savedAssets = [];
+      }
+    }
+
+    setAssets(savedAssets);
+
+    const totalVal = savedAssets.reduce(
+      (sum, a) => sum + Number(a.value || 0),
+      0
+    );
+    setTotal(totalVal);
+  }, [user]);
 
   const dataWithPercent = assets.map((a) => ({
     ...a,
-    value: Number(a.value) || 0, // 👈 force numeric
+    value: Number(a.value) || 0,
     percentage: total ? ((Number(a.value || 0) / total) * 100).toFixed(2) : 0,
   }));
+
+  const COLORS = [
+    "#10B981",
+    "#3B82F6",
+    "#F59E0B",
+    "#EF4444",
+    "#8B5CF6",
+    "#14B8A6",
+    "#F43F5E",
+    "#22C55E",
+    "#EAB308",
+    "#0EA5E9",
+  ];
+
+  if (loading) return <p className="text-center py-6">Loading...</p>;
+  if (!user)
+    return (
+      <p className="text-center py-6">Please log in to view your assets.</p>
+    );
 
   return (
     <>
@@ -51,13 +81,13 @@ export default function AssetsReport() {
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             />
             <motion.div
-                      className="absolute top-0 right-0 w-52 h-52 bg-gradient-to-tr from-teal-400/40 to-emerald-400 rounded-full opacity-20 blur-3xl"
-                      animate={{
-                        y: [0, 20, 0],
-                        x: [0, -20, 0],
-                      }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    />
+              className="absolute top-0 right-0 w-52 h-52 bg-gradient-to-tr from-teal-400/40 to-emerald-400 rounded-full opacity-20 blur-3xl"
+              animate={{
+                y: [0, 20, 0],
+                x: [0, -20, 0],
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mt-10">
               Report & Insights
             </h1>

@@ -27,7 +27,7 @@ if (!user) return <p>Please log in to view your assets.</p>; // show if not logg
   
 
 
-const SECRET_KEY = import.meta.env.VITE_ASSET_SECRET_KEY; // NEW: encryption key
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY; // NEW: encryption key
 
 const storageKey = `assetsData_${user?.uid}`; // NEW: per-user storage key
 

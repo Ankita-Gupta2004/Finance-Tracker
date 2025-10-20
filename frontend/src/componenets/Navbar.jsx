@@ -40,7 +40,7 @@ export default function Navbar() {
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "My Expenses", href: "/expenseform" },
-    { name: "Assests", href: "/assetscard" },
+    { name: "Assets", href: "/assetscard" },
     { name: "Investments", href: "/investmentssection" },
     { name: "Goals", href: "/goalspage" },
     { name: "Dashboard", href: "/dashboard" },

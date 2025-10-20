@@ -39,9 +39,24 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // ✅ Check if email is verified
+      if (!user.emailVerified) {
+        alert("Please verify your email before logging in.");
+        await auth.signOut(); // Sign out unverified user
+        return;
+      }
+
       alert("Login successful!");
-      navigate("/"); // ✅ Redirect to home page
+      navigate("/"); // Redirect to home page
+
+      // Optional: call your backend to sync user here
     } catch (err) {
       alert(err.message);
     }

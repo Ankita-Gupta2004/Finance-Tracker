@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import Navbar from "../componenets/Navbar";
 import Footer from "../componenets/Footer";
 import { auth } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 // ✅ Custom Input
 function Input({ type = "text", placeholder, className = "", ...props }) {
@@ -34,21 +34,37 @@ export default function CreateAccount() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate(); // ✅ Initialize useNavigate
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      // Create user in Firebase
-      await createUserWithEmailAndPassword(auth, email, password);
+  try {
+    // 1️⃣ Create user in Firebase
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-      alert("Account created successfully! Please login.");
-      navigate("/login"); // ✅ Redirect to login page
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+    // 2️⃣ Update display name
+    await updateProfile(user, { displayName: name });
+
+    // 3️⃣ Send email verification
+    await sendEmailVerification(user);
+
+    // 4️⃣ Sign out the user immediately
+    await auth.signOut();
+
+    alert(
+      "Verification email sent! Please verify your email before logging in."
+    );
+
+    // 5️⃣ Redirect to login page (user must verify first)
+    navigate("/login");
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+};
+
 
   return (
     <>

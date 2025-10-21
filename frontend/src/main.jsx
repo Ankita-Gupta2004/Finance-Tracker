@@ -21,6 +21,8 @@ import Dashboard from "./componenets/Dashboard/Dashboard.jsx";
 import PrivateRoute from "./routes/PrivateRoute.jsx";
 
 import { AuthProvider } from "./context/AuthContext";
+import ForgotPassword from "./Auth/ForgotPassword.jsx";
+import ResetPassword from "./Auth/ResetPassword.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -34,6 +36,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/fdcalculator" element={<FDCalculator />} />
           <Route path="/rdcalculator" element={<RDCalculator />} />
           <Route path="/sipcalculator" element={<SIPCalculator />} />
+          <Route path="/forgotpassword" element={<ForgotPassword />} />
+          <Route path="/resetpassword" element={<ResetPassword />} />
+
 
           {/* Protected Routes */}
           <Route

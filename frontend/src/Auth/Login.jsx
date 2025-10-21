@@ -104,6 +104,14 @@ export default function Login() {
                 required
               />
             </div>
+            <div className="text-right mt-2">
+              <a
+                href="/forgotpassword"
+                className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                Forgot Password?
+              </a>
+            </div>
 
             <Button type="submit" className="w-full mt-2">
               Log In

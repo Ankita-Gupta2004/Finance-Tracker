@@ -29,3 +29,5 @@ node_modules/
 frontend/src/firebase.js
 frontend/.env
 
+dist/
+build/

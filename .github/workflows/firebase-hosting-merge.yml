@@ -3,22 +3,27 @@ on:
   push:
     branches:
       - main
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
+      # Checkout repo
       - uses: actions/checkout@v4
 
-      - name: Install dependencies (frontend)
+      # Install dependencies for frontend
+      - name: Install dependencies
         run: |
           cd frontend
           npm ci
 
+      # Build frontend
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
+      # Deploy to Firebase Hosting
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -27,4 +32,3 @@ jobs:
           channelId: live
           projectId: fintrack-645f6
           entryPoint: frontend
-

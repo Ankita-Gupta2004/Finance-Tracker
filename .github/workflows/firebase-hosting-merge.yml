@@ -22,7 +22,7 @@ jobs:
       # ✅ Add this step (IMPORTANT!)
       - name: Verify dist folder
         run: |
-          ls -R frontend/dist
+          ls -R frontend
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -31,4 +31,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINTRACK_645F6 }}
           channelId: live
           projectId: fintrack-645f6
-          entryPoint: frontend/dist
+          entryPoint: frontend

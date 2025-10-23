@@ -18,6 +18,16 @@ jobs:
         run: |
           cd frontend
           npm run build
+           env:
+    VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+    VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+    VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+    VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+    VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+    VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+    VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
+    VITE_ASSET_SECRET_KEY: ${{ secrets.VITE_ASSET_SECRET_KEY }}
+    VITE_PASSWORD_RESET_URL: ${{ secrets.VITE_PASSWORD_RESET_URL }}
 
       # ✅ Add this step (IMPORTANT!)
       - name: Verify dist folder

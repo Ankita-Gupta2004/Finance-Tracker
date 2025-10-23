@@ -36,43 +36,31 @@ export default function Login() {
   const navigate = useNavigate(); // ✅ Initialize useNavigate
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    // 1️⃣ Create user in Firebase
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
 
-    // 2️⃣ Update display name in Firebase
-    await updateProfile(user, { displayName: name });
+      // ✅ Check if email is verified
+      if (!user.emailVerified) {
+        alert("Please verify your email before logging in.");
+        await auth.signOut(); // Sign out unverified user
+        return;
+      }
 
-    // 3️⃣ Send user info to your backend (MongoDB)
-    await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        name, 
-        email, 
-        uid: user.uid  // optional: store Firebase uid in MongoDB
-      }),
-    });
+      alert("Login successful!");
+      navigate("/"); // Redirect to home page
 
-    // 4️⃣ Send email verification
-    await sendEmailVerification(user);
-
-    // 5️⃣ Sign out the user immediately
-    await auth.signOut();
-
-    alert("Verification email sent! Please verify your email before logging in.");
-
-    // 6️⃣ Redirect to login page
-    navigate("/login");
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
-};
-
+      // Optional: call your backend to sync user here
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <>

@@ -44,20 +44,29 @@ export default function CreateAccount() {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // 2️⃣ Update display name
+    // 2️⃣ Update display name in Firebase
     await updateProfile(user, { displayName: name });
 
-    // 3️⃣ Send email verification
+    // 3️⃣ Send user info to your backend (MongoDB)
+    await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        name, 
+        email, 
+        uid: user.uid  // optional: store Firebase uid in MongoDB
+      }),
+    });
+
+    // 4️⃣ Send email verification
     await sendEmailVerification(user);
 
-    // 4️⃣ Sign out the user immediately
+    // 5️⃣ Sign out the user immediately
     await auth.signOut();
 
-    alert(
-      "Verification email sent! Please verify your email before logging in."
-    );
+    alert("Verification email sent! Please verify your email before logging in.");
 
-    // 5️⃣ Redirect to login page (user must verify first)
+    // 6️⃣ Redirect to login page
     navigate("/login");
   } catch (err) {
     console.error(err);

@@ -22,7 +22,7 @@ jobs:
       # ✅ Add this step (IMPORTANT!)
       - name: Verify dist folder
         run: |
-          ls -R frontend
+          ls -R frontend/dist
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import admin from "firebase-admin";
-import userRoutes from "./routes/Users.js";
+import userRoutes from "./routes/users.js";
 
 dotenv.config();
 

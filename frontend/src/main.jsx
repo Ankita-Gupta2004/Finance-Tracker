@@ -23,6 +23,7 @@ import PrivateRoute from "./routes/PrivateRoute.jsx";
 import { AuthProvider } from "./context/AuthContext";
 import ForgotPassword from "./Auth/ForgotPassword.jsx";
 import ResetPassword from "./Auth/ResetPassword.jsx";
+import ResetSuccess from "./ResetSuccess.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/sipcalculator" element={<SIPCalculator />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
+          <Route path="/resetsuccess" element={<ResetSuccess />} />
 
 
           {/* Protected Routes */}

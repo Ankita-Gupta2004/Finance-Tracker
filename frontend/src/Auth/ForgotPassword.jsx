@@ -15,7 +15,7 @@ export default function ForgotPassword() {
         url: import.meta.env.VITE_PASSWORD_RESET_URL,
       });
 
-      alert("✅ Password reset email sent! Check your inbox (or spam).");
+      alert("Password reset email sent! Check your inbox (or spam).");
     } catch (error) {
       alert(error.message);
     }

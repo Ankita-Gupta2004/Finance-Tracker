@@ -3,7 +3,11 @@ import { motion } from "framer-motion";
 import Navbar from "../componenets/Navbar";
 import Footer from "../componenets/Footer";
 import { auth } from "../firebase";
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+} from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 // ✅ Custom Input
@@ -37,43 +41,38 @@ export default function CreateAccount() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    // 1️⃣ Create user in Firebase
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    try {
+      // 1️⃣ Create user in Firebase
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
 
-    // 2️⃣ Update display name in Firebase
-    await updateProfile(user, { displayName: name });
+      // 2️⃣ Update display name in Firebase
+      await updateProfile(user, { displayName: name });
 
-    // 3️⃣ Send user info to your backend (MongoDB)
-    await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        name, 
-        email, 
-        uid: user.uid  // optional: store Firebase uid in MongoDB
-      }),
-    });
+      // 3️⃣ Send email verification
+      await sendEmailVerification(user);
 
-    // 4️⃣ Send email verification
-    await sendEmailVerification(user);
+      // 4️⃣ Sign out immediately
+      await auth.signOut();
 
-    // 5️⃣ Sign out the user immediately
-    await auth.signOut();
+      // 5️⃣ Alert user
+      alert(
+        "Verification email sent! Please verify your email before logging in."
+      );
 
-    alert("Verification email sent! Please verify your email before logging in.");
-
-    // 6️⃣ Redirect to login page
-    navigate("/login");
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
-};
-
+      // 6️⃣ Redirect to login page
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    }
+  };
 
   return (
     <>

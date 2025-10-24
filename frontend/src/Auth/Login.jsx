@@ -53,11 +53,23 @@ export default function Login() {
         return;
       }
 
+      // ✅ Get Firebase ID token
+      const token = await user.getIdToken();
+
+      // ✅ Sync with your backend
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ extra: { name: user.displayName } }),
+      });
+
       alert("Login successful!");
       navigate("/"); // Redirect to home page
-
-      // Optional: call your backend to sync user here
     } catch (err) {
+      console.error(err);
       alert(err.message);
     }
   };

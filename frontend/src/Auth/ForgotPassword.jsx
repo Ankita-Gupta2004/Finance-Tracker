@@ -4,9 +4,33 @@ import Navbar from "../componenets/Navbar";
 import Footer from "../componenets/Footer";
 import { auth } from "../firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+
+
+const navigate = useNavigate();
+
+useEffect(() => {
+  const alreadyReset = localStorage.getItem("passwordResetDone");
+  if (alreadyReset === "true") {
+    localStorage.removeItem("passwordResetDone");
+    navigate("/login");
+  }
+
+  const handleStorage = (event) => {
+    if (event.key === "passwordResetDone" && event.newValue === "true") {
+      localStorage.removeItem("passwordResetDone");
+      navigate("/login");
+    }
+  };
+
+  window.addEventListener("storage", handleStorage);
+  return () => window.removeEventListener("storage", handleStorage);
+}, [navigate]);
+
 
   const handleResetRequest = async (e) => {
     e.preventDefault();

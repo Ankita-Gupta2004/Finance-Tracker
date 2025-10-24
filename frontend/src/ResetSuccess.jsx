@@ -1,6 +1,12 @@
+import { useEffect } from "react";
 import React from "react";
 
 export default function ResetSuccess() {
+  useEffect(() => {
+  // mark password as successfully reset
+  localStorage.setItem("passwordResetDone", "true");
+}, []);
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
       <div className="message bg-white p-8 rounded-xl shadow text-center max-w-md w-full">

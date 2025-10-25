@@ -24,6 +24,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ForgotPassword from "./Auth/ForgotPassword.jsx";
 import ResetPassword from "./Auth/ResetPassword.jsx";
 import ResetSuccess from "./ResetSuccess.jsx";
+import FireSection from "./componenets/Homepage/FireSection.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -36,6 +37,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/login" element={<Login />} />
           <Route path="/fdcalculator" element={<FDCalculator />} />
           <Route path="/rdcalculator" element={<RDCalculator />} />
+          <Route path="/firesection" element={<FireSection />} />
+
           <Route path="/sipcalculator" element={<SIPCalculator />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/resetpassword" element={<ResetPassword />} />

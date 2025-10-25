@@ -135,10 +135,10 @@ const Hero = () => {
         >
           {/* Primary Button */}
           <Link
-            to="/createaccount"
+            to="/sipcalculator"
             className="relative inline-flex items-center px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-800 to-teal-600 text-white font-bold shadow-md hover:shadow-xl transform transition-all duration-300 hover:scale-105 hover:brightness-110"
           >
-            Get Started
+            SIP Up Now
             <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
 

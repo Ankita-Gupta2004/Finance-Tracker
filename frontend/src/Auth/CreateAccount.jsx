@@ -54,6 +54,16 @@ export default function CreateAccount() {
 
       // 2️⃣ Update display name in Firebase
       await updateProfile(user, { displayName: name });
+      // Save user details to localStorage for Dashboard
+      localStorage.setItem(
+        "account",
+        JSON.stringify({
+          name: name,
+          email: email,
+          avatar: "", // you can add later
+          totalIncome: 0, // user will enter this in finance form
+        })
+      );
 
       // 3️⃣ Send email verification
       await sendEmailVerification(user);

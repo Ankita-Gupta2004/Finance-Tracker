@@ -12,6 +12,7 @@ import AssetsDashboard from "./AssetsDashboard";
 import FinanceHealthCard from "./FinanceHealthCard";
 import AccountPanelBottom from "./AccountPanelBottom";
 
+
 // const COLORS = ["#6366F1", "#F59E42", "#22C55E", "#E11D48", "#06B6D4"];
 
 // Helper to get data from localStorage

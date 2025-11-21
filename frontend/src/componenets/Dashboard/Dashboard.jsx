@@ -38,7 +38,7 @@ export default function Dashboard() {
       }
     };
 
-    // 1️⃣ Get account data
+    // 1 Get account data
     const accountData = getLocalData("account", {
       name: "Guest User",
       email: "guest@example.com",
@@ -46,14 +46,14 @@ export default function Dashboard() {
       totalIncome: 0,
     });
 
-    // 2️⃣ Get finance form data
+    // 2 Get finance form data
     const financeData = getLocalData("financeData", {});
 
     // Helper to sum amounts in an array
     const sumAmounts = (arr) =>
       (arr || []).reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
-    // 3️⃣ Calculate totals
+    // 3 Calculate totals
     const totalIncome = financeData.totalIncome || accountData.totalIncome || 0;
     const totalEssential = sumAmounts(financeData.essentialExpenses);
     const totalDiscretionary = sumAmounts(financeData.discretionaryExpenses);
@@ -76,11 +76,11 @@ export default function Dashboard() {
 
     const savings = totalIncome - totalExpense;
 
-    // 4️⃣ Get last modified
+    // 4 Get last modified
     const lastModified =
       localStorage.getItem("lastModified") || new Date().toISOString();
 
-    // 5️⃣ Set account state
+    // 5 Set account state
     setAccount({
       ...accountData,
       totalIncome,
@@ -89,7 +89,7 @@ export default function Dashboard() {
       lastModified,
     });
 
-    // 6️⃣ Prepare expenses for charts
+    // 6 Prepare expenses for charts
     const allExpenses = [
       ...(financeData.essentialExpenses || []).map((e) => ({
         ...e,
@@ -122,7 +122,7 @@ export default function Dashboard() {
     ];
     setExpenses(allExpenses);
 
-    // 7️⃣ Load goals if any
+    // 7 Load goals if any
     setGoals(getLocalData("goals", {}));
   }, []);
 

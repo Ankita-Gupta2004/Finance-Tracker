@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import CryptoJS from "crypto-js";
+import { auth } from "../../Firebase";
 const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 import Navbar from "../Navbar";
@@ -14,7 +15,6 @@ import GoalsProgressCard from "./GoalsProgressCard";
 import AssetsDashboard from "./AssetsDashboard";
 import FinanceHealthCard from "./FinanceHealthCard";
 import AccountPanelBottom from "./AccountPanelBottom";
-import { auth } from "../../firebase";
 
 // const COLORS = ["#6366F1", "#F59E42", "#22C55E", "#E11D48", "#06B6D4"];
 
@@ -33,31 +33,34 @@ export default function Dashboard() {
   const [goals, setGoals] = useState({});
 
   useEffect(() => {
-    const getLocalData = (key, fallback = {}) => {
+    const parseRawFinance = (raw) => {
+      if (!raw) return null;
+      // try plain JSON
       try {
-        return JSON.parse(localStorage.getItem(key)) || fallback;
-      } catch {
-        return fallback;
+        return JSON.parse(raw);
+      } catch {}
+      // try decrypt then parse
+      try {
+        const dec = CryptoJS.AES.decrypt(raw, SECRET_KEY).toString(
+          CryptoJS.enc.Utf8
+        );
+        return JSON.parse(dec);
+      } catch (e) {
+        console.warn("finance parse/decrypt failed", e);
+        return null;
       }
     };
 
-    const normalize = (f) => {
-      const result = { ...(f || {}) };
-      const primary = Number(result.primaryIncome || 0);
-      const otherSum =
-        (result.otherIncome || []).reduce(
-          (s, it) => s + Number(it?.amount ?? 0),
-          0
-        ) || 0;
-      result.totalIncome = Number(result.totalIncome ?? primary + otherSum);
+    const parseAmount = (v) => {
+      if (v == null) return 0;
+      if (typeof v === "number") return v;
+      // remove currency symbols, commas, spaces
+      const cleaned = String(v).replace(/[^\d.-]/g, "");
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    };
 
-      const ensureArr = (key) =>
-        (result[key] || []).map((it) => ({
-          ...it,
-          amount: Number(it?.amount ?? 0),
-          name: it?.name || it?.source || it?.category || "",
-        }));
-
+    const normalizeGroups = (f) => {
       const groups = [
         "essentialExpenses",
         "discretionaryExpenses",
@@ -67,118 +70,117 @@ export default function Dashboard() {
         "miscellaneousExpenses",
         "investments",
         "debts",
+        "expenses",
+        "otherIncome",
       ];
-
+      const out = { ...f };
       groups.forEach((g) => {
-        result[g] = ensureArr(g);
+        const arr = out[g] || [];
+        out[g] = Array.isArray(arr)
+          ? arr.map((it) => ({
+              name: it?.name || it?.source || it?.category || "",
+              amount: parseAmount(it?.amount ?? it),
+            }))
+          : [];
       });
-
-      if (Array.isArray(result.expenses)) {
-        result.expenses = result.expenses.map((it) => ({
-          ...it,
-          amount: Number(it.amount || 0),
-          name: it.name || it.category || "",
-        }));
+      // ensure totalIncome field exists
+      if (out.totalIncome == null) {
+        const primary = parseAmount(out.primaryIncome);
+        const otherSum = (out.otherIncome || []).reduce(
+          (s, it) => s + parseAmount(it?.amount ?? it),
+          0
+        );
+        out.totalIncome = primary + otherSum;
+      } else {
+        out.totalIncome = parseAmount(out.totalIncome);
       }
-      return result;
+      return out;
     };
 
-    const loadForUid = (uid) => {
-      // read user-specific encrypted data first
-      let raw = null;
-      if (uid) raw = localStorage.getItem(`financeData_${uid}`);
-
-      let financeData = {};
-      if (raw) {
-        try {
-          financeData = JSON.parse(
-            CryptoJS.AES.decrypt(raw, SECRET_KEY).toString(CryptoJS.enc.Utf8)
-          );
-        } catch (err) {
-          console.error("Failed to decrypt finance data for user", err);
-          financeData = {};
-        }
-      } else {
-        // fallback to generic key during development or anonymous flow
-        financeData = getLocalData("financeData", {});
-      }
-
-      const accountData = getLocalData("account", {
-        name: "Guest User",
-        email: "guest@example.com",
-        avatar: "",
-        totalIncome: 0,
-        budget: 0,
-      });
-
-      const f = normalize(financeData);
+    const computeAndSet = (uid) => {
+      const key = uid ? `financeData_${uid}` : "financeData";
+      const raw = localStorage.getItem(key);
+      console.log("[Dashboard] loading finance key:", key, "raw:", raw);
+      const finance = normalizeGroups(parseRawFinance(raw) || {});
+      // compute sums
       const sum = (arr) =>
-        (arr || []).reduce((s, x) => s + Number(x.amount || 0), 0);
-
-      const totalEssential = sum(f.essentialExpenses);
-      const totalDiscretionary = sum(f.discretionaryExpenses);
-      const totalDebts = sum(f.debts);
-      const totalEducation = sum(f.educationExpenses);
-      const totalFamily = sum(f.familyExpenses);
-      const totalInsurance = sum(f.insuranceExpenses);
-      const totalMisc = sum(f.miscellaneousExpenses);
-      const totalInvestments = sum(f.investments);
-      const otherExpenses = sum(f.expenses);
-
+        (arr || []).reduce((s, x) => s + parseAmount(x.amount), 0);
       const totalExpense =
-        totalEssential +
-        totalDiscretionary +
-        totalDebts +
-        totalEducation +
-        totalFamily +
-        totalInsurance +
-        totalMisc +
-        totalInvestments +
-        otherExpenses;
+        sum(finance.essentialExpenses) +
+        sum(finance.discretionaryExpenses) +
+        sum(finance.educationExpenses) +
+        sum(finance.familyExpenses) +
+        sum(finance.insuranceExpenses) +
+        sum(finance.miscellaneousExpenses) +
+        sum(finance.investments) +
+        sum(finance.debts) +
+        sum(finance.expenses);
 
-      const totalIncome = Number(f.totalIncome || accountData.totalIncome || 0);
+      const totalIncome = parseAmount(finance.totalIncome || 0);
       const savings = totalIncome - totalExpense;
+      console.log({ totalIncome, totalExpense, savings, finance });
 
-      const lastModified =
-        (uid && localStorage.getItem(`lastModified_${uid}`)) ||
-        localStorage.getItem("lastModified") ||
-        "N/A";
-
-      setAccount({
-        ...accountData,
+      // account base from per-user account_{uid} or generic
+      let accountData = {};
+      try {
+        const rawAcc = uid
+          ? localStorage.getItem(`account_${uid}`)
+          : localStorage.getItem("account");
+        accountData = rawAcc ? JSON.parse(rawAcc) : {};
+      } catch {}
+      // prefer firebase auth details where available
+      const authUser = auth?.currentUser;
+      const merged = {
+        name: authUser?.displayName || accountData.name || "Guest User",
+        email: authUser?.email || accountData.email || "guest@example.com",
+        avatar: accountData.avatar || authUser?.photoURL || "",
         totalIncome,
         totalExpense,
         savings,
-        lastModified,
-        budget: accountData.budget || 0,
-      });
+        lastModified: (() => {
+          const lmRaw = uid
+            ? localStorage.getItem(`lastModified_${uid}`)
+            : localStorage.getItem("lastModified");
+          if (lmRaw) {
+            try {
+              if (!Number.isNaN(Date.parse(lmRaw)))
+                return new Date(lmRaw).toISOString();
+            } catch {}
+            try {
+              const dec = CryptoJS.AES.decrypt(lmRaw, SECRET_KEY).toString(
+                CryptoJS.enc.Utf8
+              );
+              if (!Number.isNaN(Date.parse(dec)))
+                return new Date(dec).toISOString();
+            } catch {}
+          }
+          return accountData.lastModified || "N/A";
+        })(),
+        budget: Number(accountData.budget || 0),
+      };
 
-      const allExpenses = [
-        ...(f.essentialExpenses || []),
-        ...(f.discretionaryExpenses || []),
-        ...(f.educationExpenses || []),
-        ...(f.familyExpenses || []),
-        ...(f.insuranceExpenses || []),
-        ...(f.miscellaneousExpenses || []),
-        ...(f.investments || []),
-        ...(f.expenses || []),
-      ].map((e) => ({ ...e, category: e.name || e.category || "Other" }));
-
-      setExpenses(allExpenses);
-      setGoals(getLocalData("goals", {}));
+      setAccount(merged);
+      // expenses flat list for charts
+      const allExp = [
+        ...(finance.essentialExpenses || []),
+        ...(finance.discretionaryExpenses || []),
+        ...(finance.educationExpenses || []),
+        ...(finance.familyExpenses || []),
+        ...(finance.insuranceExpenses || []),
+        ...(finance.miscellaneousExpenses || []),
+        ...(finance.investments || []),
+        ...(finance.debts || []),
+        ...(finance.expenses || []),
+      ].map((e) => ({
+        ...e,
+        category: e.name || "Other",
+        amount: parseAmount(e.amount),
+      }));
+      setExpenses(allExp);
     };
 
-    // If user already signed in, read immediately to avoid spinner on navigation
-    if (auth?.currentUser) {
-      loadForUid(auth.currentUser.uid);
-      return;
-    }
-
-    // otherwise listen for auth state then load
-    const unsub = onAuthStateChanged(auth, (u) => {
-      if (u) loadForUid(u.uid);
-      else loadForUid(null);
-    });
+    if (auth?.currentUser) computeAndSet(auth.currentUser.uid);
+    const unsub = onAuthStateChanged(auth, (u) => computeAndSet(u?.uid));
     return () => unsub();
   }, []);
 

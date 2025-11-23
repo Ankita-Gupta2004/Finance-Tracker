@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import CryptoJS from "crypto-js";
-import { auth } from "../../Firebase";
+import { auth } from "../../firebase";
 const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 import Navbar from "../Navbar";

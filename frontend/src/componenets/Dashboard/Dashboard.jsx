@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import CryptoJS from "crypto-js";
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 import Navbar from "../Navbar";
 import Footer from "../Footer";
@@ -11,7 +14,7 @@ import GoalsProgressCard from "./GoalsProgressCard";
 import AssetsDashboard from "./AssetsDashboard";
 import FinanceHealthCard from "./FinanceHealthCard";
 import AccountPanelBottom from "./AccountPanelBottom";
-
+import { auth } from "../../firebase";
 
 // const COLORS = ["#6366F1", "#F59E42", "#22C55E", "#E11D48", "#06B6D4"];
 
@@ -30,7 +33,6 @@ export default function Dashboard() {
   const [goals, setGoals] = useState({});
 
   useEffect(() => {
-    // Helper to safely get data from localStorage
     const getLocalData = (key, fallback = {}) => {
       try {
         return JSON.parse(localStorage.getItem(key)) || fallback;
@@ -39,92 +41,145 @@ export default function Dashboard() {
       }
     };
 
-    // 1 Get account data
-    const accountData = getLocalData("account", {
-      name: "Guest User",
-      email: "guest@example.com",
-      avatar: "",
-      totalIncome: 0,
+    const normalize = (f) => {
+      const result = { ...(f || {}) };
+      const primary = Number(result.primaryIncome || 0);
+      const otherSum =
+        (result.otherIncome || []).reduce(
+          (s, it) => s + Number(it?.amount ?? 0),
+          0
+        ) || 0;
+      result.totalIncome = Number(result.totalIncome ?? primary + otherSum);
+
+      const ensureArr = (key) =>
+        (result[key] || []).map((it) => ({
+          ...it,
+          amount: Number(it?.amount ?? 0),
+          name: it?.name || it?.source || it?.category || "",
+        }));
+
+      const groups = [
+        "essentialExpenses",
+        "discretionaryExpenses",
+        "educationExpenses",
+        "familyExpenses",
+        "insuranceExpenses",
+        "miscellaneousExpenses",
+        "investments",
+        "debts",
+      ];
+
+      groups.forEach((g) => {
+        result[g] = ensureArr(g);
+      });
+
+      if (Array.isArray(result.expenses)) {
+        result.expenses = result.expenses.map((it) => ({
+          ...it,
+          amount: Number(it.amount || 0),
+          name: it.name || it.category || "",
+        }));
+      }
+      return result;
+    };
+
+    const loadForUid = (uid) => {
+      // read user-specific encrypted data first
+      let raw = null;
+      if (uid) raw = localStorage.getItem(`financeData_${uid}`);
+
+      let financeData = {};
+      if (raw) {
+        try {
+          financeData = JSON.parse(
+            CryptoJS.AES.decrypt(raw, SECRET_KEY).toString(CryptoJS.enc.Utf8)
+          );
+        } catch (err) {
+          console.error("Failed to decrypt finance data for user", err);
+          financeData = {};
+        }
+      } else {
+        // fallback to generic key during development or anonymous flow
+        financeData = getLocalData("financeData", {});
+      }
+
+      const accountData = getLocalData("account", {
+        name: "Guest User",
+        email: "guest@example.com",
+        avatar: "",
+        totalIncome: 0,
+        budget: 0,
+      });
+
+      const f = normalize(financeData);
+      const sum = (arr) =>
+        (arr || []).reduce((s, x) => s + Number(x.amount || 0), 0);
+
+      const totalEssential = sum(f.essentialExpenses);
+      const totalDiscretionary = sum(f.discretionaryExpenses);
+      const totalDebts = sum(f.debts);
+      const totalEducation = sum(f.educationExpenses);
+      const totalFamily = sum(f.familyExpenses);
+      const totalInsurance = sum(f.insuranceExpenses);
+      const totalMisc = sum(f.miscellaneousExpenses);
+      const totalInvestments = sum(f.investments);
+      const otherExpenses = sum(f.expenses);
+
+      const totalExpense =
+        totalEssential +
+        totalDiscretionary +
+        totalDebts +
+        totalEducation +
+        totalFamily +
+        totalInsurance +
+        totalMisc +
+        totalInvestments +
+        otherExpenses;
+
+      const totalIncome = Number(f.totalIncome || accountData.totalIncome || 0);
+      const savings = totalIncome - totalExpense;
+
+      const lastModified =
+        (uid && localStorage.getItem(`lastModified_${uid}`)) ||
+        localStorage.getItem("lastModified") ||
+        "N/A";
+
+      setAccount({
+        ...accountData,
+        totalIncome,
+        totalExpense,
+        savings,
+        lastModified,
+        budget: accountData.budget || 0,
+      });
+
+      const allExpenses = [
+        ...(f.essentialExpenses || []),
+        ...(f.discretionaryExpenses || []),
+        ...(f.educationExpenses || []),
+        ...(f.familyExpenses || []),
+        ...(f.insuranceExpenses || []),
+        ...(f.miscellaneousExpenses || []),
+        ...(f.investments || []),
+        ...(f.expenses || []),
+      ].map((e) => ({ ...e, category: e.name || e.category || "Other" }));
+
+      setExpenses(allExpenses);
+      setGoals(getLocalData("goals", {}));
+    };
+
+    // If user already signed in, read immediately to avoid spinner on navigation
+    if (auth?.currentUser) {
+      loadForUid(auth.currentUser.uid);
+      return;
+    }
+
+    // otherwise listen for auth state then load
+    const unsub = onAuthStateChanged(auth, (u) => {
+      if (u) loadForUid(u.uid);
+      else loadForUid(null);
     });
-
-    // 2 Get finance form data
-    const financeData = getLocalData("financeData", {});
-
-    // Helper to sum amounts in an array
-    const sumAmounts = (arr) =>
-      (arr || []).reduce((sum, e) => sum + Number(e.amount || 0), 0);
-
-    // 3 Calculate totals
-    const totalIncome = financeData.totalIncome || accountData.totalIncome || 0;
-    const totalEssential = sumAmounts(financeData.essentialExpenses);
-    const totalDiscretionary = sumAmounts(financeData.discretionaryExpenses);
-    const totalDebts = sumAmounts(financeData.debts);
-    const totalEducation = sumAmounts(financeData.educationExpenses);
-    const totalFamily = sumAmounts(financeData.familyExpenses);
-    const totalInsurance = sumAmounts(financeData.insuranceExpenses);
-    const totalMisc = sumAmounts(financeData.miscellaneousExpenses);
-    const totalInvestments = sumAmounts(financeData.investments);
-
-    const totalExpense =
-      totalEssential +
-      totalDiscretionary +
-      totalDebts +
-      totalEducation +
-      totalFamily +
-      totalInsurance +
-      totalMisc +
-      totalInvestments;
-
-    const savings = totalIncome - totalExpense;
-
-    // 4 Get last modified
-    const lastModified =
-      localStorage.getItem("lastModified") || new Date().toISOString();
-
-    // 5 Set account state
-    setAccount({
-      ...accountData,
-      totalIncome,
-      totalExpense,
-      savings,
-      lastModified,
-    });
-
-    // 6 Prepare expenses for charts
-    const allExpenses = [
-      ...(financeData.essentialExpenses || []).map((e) => ({
-        ...e,
-        category: e.name,
-      })),
-      ...(financeData.discretionaryExpenses || []).map((e) => ({
-        ...e,
-        category: e.name,
-      })),
-      ...(financeData.educationExpenses || []).map((e) => ({
-        ...e,
-        category: e.name,
-      })),
-      ...(financeData.familyExpenses || []).map((e) => ({
-        ...e,
-        category: e.name,
-      })),
-      ...(financeData.insuranceExpenses || []).map((e) => ({
-        ...e,
-        category: e.name,
-      })),
-      ...(financeData.miscellaneousExpenses || []).map((e) => ({
-        ...e,
-        category: e.name,
-      })),
-      ...(financeData.investments || []).map((e) => ({
-        ...e,
-        category: e.name,
-      })),
-    ];
-    setExpenses(allExpenses);
-
-    // 7 Load goals if any
-    setGoals(getLocalData("goals", {}));
+    return () => unsub();
   }, []);
 
   const savings = account.totalIncome - account.totalExpense;

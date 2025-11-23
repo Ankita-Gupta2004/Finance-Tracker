@@ -43,7 +43,7 @@ export default function FireSection() {
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-t from-gray-100 to-gray-50 dark:from-black dark:to-gray-900">
+    <section id="fireSection" className="py-24 bg-gradient-to-t from-gray-100 to-gray-50 dark:from-black dark:to-gray-900">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12">
         {/* Left Info Panel */}
         <motion.div

@@ -1,5 +1,7 @@
 # FinTrack
 
+Website Link - [text](https://fintrack-645f6.web.app/)
+
 FinTrack is a personal finance tracker web application built using the MERN stack (React, Node.js/Express.js, MongoDB) with Firebase authentication. It enables users to efficiently manage their finances by recording income and expenses, visualizing spending patterns through interactive charts, setting financial goals and budgets, and utilizing advanced financial calculators such as FIRE, FD, RD, and SIP calculators.
 
 The app provides users with actionable insights into their financial health and includes a SIP Optimizer feature to evaluate whether they are investing the right amount in the right instruments. Per-user data storage and client-side AES encryption ensure quick UI responses and robust data privacy. All financial data is securely stored locally on the user’s device, with no data transmitted to external servers, giving users full control over their information.
